@@ -1,0 +1,23 @@
+* {
+  outline: none;
+}
+
+/* These styles make the body full-height */
+html,
+body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* These styles disable body scrolling if you are using <ScrollView> */
+body {
+  overflow: hidden;
+}
+/* These styles make the root element full-height */
+#root {
+  display: flex;
+  height: 100%;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");
+
