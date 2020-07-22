@@ -3,36 +3,57 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/filecoin-project/lotus/api"
 	client "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/chain/types"
+	"github.com/peterbourgon/ff/v3"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
-
-const exitFail = 1
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
-		os.Exit(exitFail)
+		log.Fatal().Err(err).Msg("Received err from run func, exiting...")
 	}
 }
 
 type server struct {
-	// TODO: db
 	rpc api.FullNode
 }
 
 func run() error {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+
+	fs := flag.NewFlagSet("node", flag.ExitOnError)
+
+	var (
+		port      = fs.String("port", "8080", "port for server to listen on")
+		authToken = fs.String("auth_token", "", "authorization token for lotus daemon")
+	)
+
+	if err := ff.Parse(fs, os.Args[1:],
+		ff.WithEnvVarPrefix("HACKFS_NODE"),
+	); err != nil {
+		return fmt.Errorf("Unable to parse flags: %s", err)
+	}
+
+	log.Info().Msg("Attempting to connect to lotus daemon")
+
 	rpc, closer, err := client.NewFullNodeRPC("ws://localhost:1234/rpc/v0", http.Header{
-		"Authorization": []string{fmt.Sprintf("Bearer %s", os.Getenv("AUTH_TOKEN"))},
+		"Authorization": []string{fmt.Sprintf("Bearer %s", *authToken)},
 	})
 	if err != nil {
+		log.Error().
+			Err(err).
+			Str("auth token", *authToken).
+			Msg("Unable to connect to lotus daemon - should confirm the daemon running and an authentication token is supplied")
+
 		return fmt.Errorf("unable to create common RPC client: %s", err)
 	}
 
@@ -42,7 +63,9 @@ func run() error {
 		rpc: rpc,
 	}
 
-	return http.ListenAndServe(":8080", s)
+	log.Info().Str("port", *port).Msg("Starting server")
+
+	return http.ListenAndServe(fmt.Sprintf(":%s", *port), s)
 }
 
 // RPCRequest is a generic request received by the HTTP server.
@@ -76,21 +99,23 @@ func (s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "miner-info":
 		info, err := s.MinerInfo()
 		if err != nil {
-			log.Printf("unable to retrieve miner info: %s", err)
+			log.Error().Err(err).Msg("Unable to retrieve miner info")
 			errJSON(w, err)
+
 			return
 		}
 
 		bytes, err := json.Marshal(info)
 		if err != nil {
-			log.Printf("unable to marshal miner info JSON: %s", err)
+			log.Error().Err(err).Msg("Unable to marshal miner info JSON")
 			errJSON(w, err)
+
 			return
 		}
 
 		_, err = w.Write(bytes)
 		if err != nil {
-			fmt.Printf("An error occurred writing back to client: %s\n", err)
+			log.Error().Err(err).Msg("Unable to write back to client")
 		}
 
 	default:
@@ -106,15 +131,19 @@ func (s server) MinerInfo() ([]api.MinerInfo, error) {
 		return nil, fmt.Errorf("unable to retrieve actors: %s", err)
 	}
 
-	minerInfos := make([]api.MinerInfo, len(addrs))
+	// cap the number of miners to retrieve at 50
+	minersToRetrieve := len(addrs)
+	if minersToRetrieve > 50 {
+		minersToRetrieve = 50
+	}
 
-	fmt.Println(len(addrs))
+	minerInfos := make([]api.MinerInfo, minersToRetrieve)
 
-	for i, addr := range addrs[:50] {
+	for i, addr := range addrs[:minersToRetrieve] {
 		minerInfo, err := s.rpc.StateMinerInfo(ctx, addr, types.EmptyTSK)
 		if err != nil {
+			log.Info().Err(err).Str("address", addr.String()).Msg("Unable to retrieve miner info")
 			continue
-			// return nil, fmt.Errorf("unable to retrieve miner info: %s", err)
 		}
 
 		minerInfos[i] = minerInfo
@@ -134,12 +163,14 @@ func errJSON(w http.ResponseWriter, err error) {
 	if err != nil {
 		_, err = w.Write([]byte("{'err': 'An error occurred'}"))
 		if err != nil {
-			fmt.Printf("An error occurred writing back to client: %s\n", err)
+			log.Error().Err(err).Msg("Unable to write back to client")
+			return
 		}
 	}
 
 	_, err = w.Write(bytes)
 	if err != nil {
-		fmt.Printf("An error occurred writing back to client: %s\n", err)
+		log.Error().Err(err).Msg("Unable to write back to client")
+		return
 	}
 }
