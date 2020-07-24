@@ -33,7 +33,7 @@ func run() error {
 	fs := flag.NewFlagSet("node", flag.ExitOnError)
 
 	var (
-		port      = fs.String("port", "8080", "port for server to listen on")
+		port      = fs.String("port", "8080", "port for the HTTP server to listen on")
 		authToken = fs.String("auth_token", "", "authorization token for lotus daemon")
 	)
 
@@ -59,11 +59,13 @@ func run() error {
 
 	defer closer()
 
-	s := server{
+	s := &server{
 		rpc: rpc,
 	}
 
 	log.Info().Str("port", *port).Msg("Starting server")
+
+	go s.runWorker()
 
 	return http.ListenAndServe(fmt.Sprintf(":%s", *port), s)
 }
@@ -73,7 +75,7 @@ type RPCRequest struct {
 	RPC string `json:"rpc"`
 }
 
-func (s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Only POST is allowed", http.StatusMethodNotAllowed)
 		return
@@ -123,7 +125,74 @@ func (s server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s server) MinerInfo() ([]api.MinerInfo, error) {
+func (s *server) runWorker() error {
+	ctx := context.Background()
+
+	messagePoolUpdateChannel, err := s.rpc.MpoolSub(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to subscribe to message pool: %s", err)
+	}
+
+	chainNotify, err := s.rpc.ChainNotify(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to subscribe to chain notify channel: %s", err)
+	}
+
+	for {
+		select {
+		case update := <-messagePoolUpdateChannel:
+			msg := update.Message.VMMessage()
+
+			// for now, just log the details of the update
+			// in the future, use the address to identify if it's a miner or what
+			log.Info().
+				Str("to", msg.To.String()).
+				Str("from", msg.From.String()).
+				Str("value", msg.Value.String()).
+				Str("method", msg.Method.String()).
+				Msg("received update message")
+
+		case chainUpdate := <-chainNotify:
+			log.Info().Msg("received chain notification")
+
+			for _, headChange := range chainUpdate {
+				if headChange != nil {
+					log.Info().
+						Str("type", headChange.Type).
+						Str("height", headChange.Val.Height().String()).
+						Send()
+
+					go s.ProcessTipSet(headChange.Val)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *server) ProcessTipSet(ts *types.TipSet) error {
+	addrs, err := s.rpc.StateListActors(context.Background(), ts.Key())
+	if err != nil {
+		return fmt.Errorf("unable to list actors: %s", err)
+	}
+
+	log.Info().Int("number of actors", len(addrs)).Send()
+
+	// NOTE: this is too much information
+	// 	for _, addr := range addrs {
+	// 		actor, err := s.rpc.StateGetActor(context.Background(), addr, ts.Key())
+	// 		if err != nil {
+	// 			return fmt.Errorf("unable to get actor: %s", err)
+	// 		}
+
+	// 		log.Info().Str("cid", builtin.ActorNameByCode(actor.Code)).Send()
+	// 	}
+
+	return nil
+}
+
+func (s *server) MinerInfo() ([]api.MinerInfo, error) {
 	ctx := context.Background()
 
 	addrs, err := s.rpc.StateListMiners(ctx, types.EmptyTSK)
