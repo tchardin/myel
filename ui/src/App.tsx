@@ -1,19 +1,23 @@
-import React from 'react';
-
-import Text from './components/Text';
-import Main from './components/Main';
-import Scroll from './components/Scroll';
+import * as React from 'react';
+import {Suspense, lazy} from 'react';
+import {Routes, Route} from 'react-router-dom';
 import Banner from './components/Banner';
 
-function App() {
+const Auth = lazy(() => import('./Auth'));
+const Home = lazy(() => import('./Home'));
+
+const App = () => {
   return (
-    <Scroll>
+    <>
       <Banner />
-      <Main>
-        <Text is="title">Hello Hack FS</Text>
-      </Main>
-    </Scroll>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/auth" element={<Auth />} />
+        </Routes>
+      </Suspense>
+    </>
   );
-}
+};
 
 export default App;
