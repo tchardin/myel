@@ -4,7 +4,7 @@ import {Text as RNText, StyleSheet, TextStyle} from 'react-native';
 import {useTheme} from '../theme';
 
 type TextProps = {
-  is: 'body' | 'label' | 'h1' | 'h2' | 'h3';
+  is: 'body' | 'label' | 'h1' | 'h2' | 'h3' | 'balance' | 'sups';
   children: string | React.ReactNode;
   style?: TextStyle;
   nativeID?: string;
@@ -22,6 +22,8 @@ const levels = {
   h3: 3,
   body: undefined,
   label: undefined,
+  balance: undefined,
+  sups: undefined,
 };
 
 const Text: React.FC<TextProps> = memo(({is, children, style, nativeID}) => {
@@ -54,6 +56,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  balance: {
+    fontSize: 32,
+    // @ts-ignore: web feature
+    fontFeatureSettings: "'tnum' 1, 'zero' 1",
+  },
+  sups: {
+    // @ts-ignore: web feature
+    fontFeatureSettings: "'kern' 1, 'sups' 1",
+    textAlignVertical: 'top',
   },
   body: {},
 });

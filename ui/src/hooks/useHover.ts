@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import {useState, useCallback} from 'react';
 
 type HoverProps = {
   disabled?: boolean;
@@ -6,16 +6,15 @@ type HoverProps = {
 
 type HoverState = [
   boolean,
-  { onMouseEnter?: (e: any) => void; onMouseLeave?: (e: any) => void }
+  {onMouseEnter?: (e: any) => void; onMouseLeave?: (e: any) => void}
 ];
 
-export const useHover = ({ disabled }: HoverProps) => {
+export const useHover = ({disabled}: HoverProps = {}) => {
   const [hovered, setHovered] = useState(false);
   const mouseEnter = useCallback(() => setHovered(true), []);
   const mouseLeave = useCallback(() => setHovered(false), []);
   return [
     hovered,
-    disabled ? {} : { onMouseEnter: mouseEnter, onMouseLeave: mouseLeave }
+    disabled ? {} : {onMouseEnter: mouseEnter, onMouseLeave: mouseLeave},
   ];
 };
-

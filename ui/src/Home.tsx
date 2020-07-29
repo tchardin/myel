@@ -1,7 +1,13 @@
 import * as React from 'react';
 import {useLayoutEffect, useMemo} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {useRecoilValue, selector} from 'recoil';
+import {
+  useRecoilValue,
+  selector,
+  atom,
+  useSetRecoilState,
+  useRecoilState,
+} from 'recoil';
 import format from 'date-fns/format';
 import {
   signedInState,
@@ -12,10 +18,11 @@ import {
 import Text from './components/Text';
 import Table from './components/Table';
 import Space from './components/Space';
+import {PageSheet} from './components/Sheets';
 
 // const getSyncState = (client: LotusClient) => client.syncState();
 
-const userIDQuery = selector({
+const userIDQuery = selector<string>({
   key: 'CurrentUserID',
   get: async ({get}) => {
     const client = get(lotusClient);
@@ -25,13 +32,31 @@ const userIDQuery = selector({
   },
 });
 
+const walletBalanceQuery = selector<number>({
+  key: 'WalletBalance',
+  get: async ({get}) => {
+    const client = get(lotusClient);
+    const addr = await client.walletDefaultAddress();
+    const balance = await client.walletBalance(addr);
+    return balance;
+  },
+});
+
 const HomeTitle = () => {
   const userID = useRecoilValue(userIDQuery);
+  const balance = useRecoilValue(walletBalanceQuery);
   return (
-    <Space scale={7}>
-      <Space scale={3}>
-        <Text is="h1">Welcome, {userID}</Text>
+    <Space scale={3}>
+      <Text is="h1">Welcome, {userID}</Text>
+      <Space scale={4}>
         <Text is="body">Here are the active deals on the Filecoin market</Text>
+      </Space>
+      <Space scale={2}>
+        <Text is="label">Balance</Text>
+        <Text is="balance">
+          <Text is="sups">⨎</Text>
+          {balance}
+        </Text>
       </Space>
     </Space>
   );
@@ -48,6 +73,11 @@ interface Deal {
   providerCollateral: string;
   clientCollateral: string;
 }
+
+const selectedDealState = atom<Deal | null>({
+  key: 'SelectedDealState',
+  default: null,
+});
 
 const marketDealsQuery = selector({
   key: 'MarketDeals',
@@ -81,8 +111,7 @@ const formatDate = (d: Date): string => format(d, 'd MMM, yy');
 
 const DealsTable: React.FC = ({children}) => {
   const data = useRecoilValue(marketDealsQuery);
-  console.log(data);
-
+  const selectDeal = useSetRecoilState(selectedDealState);
   const rows = useMemo(
     () =>
       data.map((deal) => [
@@ -99,7 +128,16 @@ const DealsTable: React.FC = ({children}) => {
     () => ['ID', 'CLIENT', 'PROVIDER', 'START', 'END', 'SIZE'],
     []
   );
-  return <Table data={rows} children={children} head={head} />;
+  return (
+    <Table data={rows} children={children} head={head} onSelect={selectDeal} />
+  );
+};
+
+const DealDetails = () => {
+  const [selectedDeal, setDeal] = useRecoilState(selectedDealState);
+  return (
+    <PageSheet visible={!!selectedDeal} onRequestClose={() => setDeal(null)} />
+  );
 };
 
 const Home = () => {
@@ -113,6 +151,7 @@ const Home = () => {
   return (
     <DealsTable>
       <HomeTitle />
+      <DealDetails />
     </DealsTable>
   );
 };

@@ -18,7 +18,8 @@ const colors = {
     bg: '#ECF0F3',
     error: '#f95a54',
     success: 'lightgreen',
-    tableCell: '#FFFFFF',
+    tableRow: '#FFFFFF',
+    tableRowHovered: '#E6EEF8',
   },
   dark: {
     text: 'rgba(255, 255, 255, 0.8)',
@@ -26,13 +27,14 @@ const colors = {
     bg: '#292D32',
     error: '#c84b47',
     success: 'green',
-    tableCell: '#353A40',
+    tableRow: '#353A40',
+    tableRowHovered: '#474D56',
   },
 };
 
 const baseTheme = StyleSheet.create({
   text: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
     fontSize: 16,
   },
 });
@@ -82,8 +84,11 @@ const lightTheme = StyleSheet.create({
     boxShadow:
       'inset 2px 2px 5px rgba(136, 165, 191, 0.38), inset -3px -3px 7px #FFFFFF',
   },
-  neoTableCell: {
-    backgroundColor: colors.light.tableCell,
+  neoTableRow: {
+    backgroundColor: colors.light.tableRow,
+  },
+  neoTableRowHovered: {
+    backgroundColor: colors.light.tableRowHovered,
   },
 });
 const darkTheme = StyleSheet.create({
@@ -134,8 +139,13 @@ const darkTheme = StyleSheet.create({
     boxShadow:
       'inset 2px 2px 5px #070709, inset -5px -5px 10px rgba(255, 255, 255, 0.05)',
   },
-  neoTableCell: {
-    backgroundColor: colors.dark.tableCell,
+  neoTableRow: {
+    backgroundColor: colors.dark.tableRow,
+    // @ts-ignore: web styles
+    transition: transitions.default,
+  },
+  neoTableRowHovered: {
+    backgroundColor: colors.dark.tableRowHovered,
   },
 });
 
@@ -151,7 +161,8 @@ const themeStyles = {
     neoField: lightTheme.neoField,
     neoFieldError: lightTheme.neoFieldError,
     neoFieldFocused: lightTheme.neoFieldFocused,
-    neoTableCell: lightTheme.neoTableCell,
+    neoTableRow: lightTheme.neoTableRow,
+    neoTableRowHovered: lightTheme.neoTableRowHovered,
   },
   dark: {
     text: [baseTheme.text, darkTheme.text],
@@ -164,7 +175,8 @@ const themeStyles = {
     neoField: darkTheme.neoField,
     neoFieldError: darkTheme.neoFieldError,
     neoFieldFocused: darkTheme.neoFieldFocused,
-    neoTableCell: darkTheme.neoTableCell,
+    neoTableRow: darkTheme.neoTableRow,
+    neoTableRowHovered: darkTheme.neoTableRowHovered,
   },
 };
 
