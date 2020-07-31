@@ -70,12 +70,31 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   pageSheet: {
     height: 800,
     maxWidth: 520,
     width: '100%',
     borderRadius: 24,
+    opacity: 0,
+    transform: [{scale: 1}],
     backdropFilter: 'blur(8px)',
+    // @ts-ignore: web styles
+    animationDuration: '.5s',
+    animationKeyframes: [
+      {
+        '0%': {
+          transform: [{scale: 0.8}, {translateY: 300}],
+          opacity: 0,
+        },
+        '100%': {
+          transform: [{scale: 1}, {translateY: 0}],
+          opacity: 1,
+        },
+      },
+    ],
+    animationTimingFunction: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
+    animationFillMode: 'forwards',
   },
 });

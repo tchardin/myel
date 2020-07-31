@@ -13,6 +13,7 @@
     "@types/react-dom": "^16.9.0",
     "@types/react-native": "^0.63.1",
     "@types/recoil": "^0.0.1",
+    "bignumber.js": "^9.0.0",
     "date-fns": "^2.15.0",
     "final-form": "^4.20.1",
     "history": "^5.0.0",
@@ -24,6 +25,7 @@
     "react-remove-scroll": "^2.3.0",
     "react-router-dom": "6.0.0-beta.0",
     "react-scripts": "3.4.1",
+    "react-spring": "^9.0.0-rc.3",
     "recoil": "^0.0.10",
     "typescript": "~3.7.2"
   },

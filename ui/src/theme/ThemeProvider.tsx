@@ -90,6 +90,22 @@ const lightTheme = StyleSheet.create({
   neoTableRowHovered: {
     backgroundColor: colors.light.tableRowHovered,
   },
+  bgOverlay: {
+    // @ts-ignore: web styles
+    animationDuration: '.5s',
+    animationKeyframes: [
+      {
+        '0%': {
+          backgroundColor: 'rgba(14, 16, 17, 0)',
+        },
+        '100%': {
+          backgroundColor: 'rgba(14, 16, 17, 0.7)',
+        },
+      },
+    ],
+    animationTimingFunction: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
+    animationFillMode: 'forwards',
+  },
 });
 const darkTheme = StyleSheet.create({
   text: {
@@ -147,6 +163,23 @@ const darkTheme = StyleSheet.create({
   neoTableRowHovered: {
     backgroundColor: colors.dark.tableRowHovered,
   },
+  bgOverlay: {
+    backgroundColor: 'rgba(14, 16, 17, 0)',
+    // @ts-ignore: web styles
+    animationDuration: '.5s',
+    animationKeyframes: [
+      {
+        '0%': {
+          backgroundColor: 'rgba(14, 16, 17, 0)',
+        },
+        '100%': {
+          backgroundColor: 'rgba(14, 16, 17, 0.7)',
+        },
+      },
+    ],
+    animationTimingFunction: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
+    animationFillMode: 'forwards',
+  },
 });
 
 const themeStyles = {
@@ -163,6 +196,7 @@ const themeStyles = {
     neoFieldFocused: lightTheme.neoFieldFocused,
     neoTableRow: lightTheme.neoTableRow,
     neoTableRowHovered: lightTheme.neoTableRowHovered,
+    bgOverlay: lightTheme.bgOverlay,
   },
   dark: {
     text: [baseTheme.text, darkTheme.text],
@@ -177,6 +211,7 @@ const themeStyles = {
     neoFieldFocused: darkTheme.neoFieldFocused,
     neoTableRow: darkTheme.neoTableRow,
     neoTableRowHovered: darkTheme.neoTableRowHovered,
+    bgOverlay: darkTheme.bgOverlay,
   },
 };
 

@@ -36,9 +36,14 @@ const Cell: React.FC = memo(({children}) => {
   return <View style={[styles.cell]}>{children}</View>;
 });
 
+type TableDatum = {
+  data: any[];
+  [key: string]: any;
+};
+
 type TableProps = {
   children: any;
-  data: any[][];
+  data: TableDatum[];
   head: string[];
   onSelect: (item: any) => void;
 };
@@ -46,9 +51,9 @@ type TableProps = {
 const Table: React.FC<TableProps> = memo(({children, data, head, onSelect}) => {
   const {theme} = useTheme();
   const renderItem = useCallback(
-    ({item, head}) => (
+    ({item: {data, ...item}, head}) => (
       <Row onPress={head ? undefined : () => onSelect(item)} head={head}>
-        {item.map(
+        {data.map(
           (dat: string, i: number): React.ReactNode => (
             <Cell key={`cell-${i}-${item[0]}`}>
               <Text is={head ? 'label' : 'body'}>{dat}</Text>
@@ -63,7 +68,7 @@ const Table: React.FC<TableProps> = memo(({children, data, head, onSelect}) => {
     () => (
       <View style={styles.header}>
         {children}
-        {renderItem({item: head, head: true})}
+        {renderItem({item: {data: head}, head: true})}
       </View>
     ),
     [children, head, renderItem]

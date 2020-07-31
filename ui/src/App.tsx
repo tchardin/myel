@@ -3,8 +3,8 @@ import {Suspense, lazy} from 'react';
 import {Routes, Route} from 'react-router-dom';
 import Banner from './components/Banner';
 
-const Auth = lazy(() => import('./Auth'));
-const Home = lazy(() => import('./Home'));
+const Auth = lazy(() => import('./pages/Auth'));
+const Deals = lazy(() => import('./pages/Deals'));
 
 const App = () => {
   return (
@@ -12,7 +12,7 @@ const App = () => {
       <Banner />
       <Suspense fallback={null}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Deals />} />
           <Route path="/auth" element={<Auth />} />
         </Routes>
       </Suspense>
