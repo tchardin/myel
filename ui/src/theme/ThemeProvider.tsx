@@ -20,6 +20,8 @@ const colors = {
     success: 'lightgreen',
     tableRow: '#FFFFFF',
     tableRowHovered: '#E6EEF8',
+    handleMatter: '#5c5f66',
+    highlight: '#f2f5f9',
   },
   dark: {
     text: 'rgba(255, 255, 255, 0.8)',
@@ -29,6 +31,8 @@ const colors = {
     success: 'green',
     tableRow: '#353A40',
     tableRowHovered: '#474D56',
+    handleMatter: '#bfc2cd',
+    highlight: '#1E232B',
   },
 };
 
@@ -43,6 +47,8 @@ const lightTheme = StyleSheet.create({
     color: colors.light.text,
   },
   bg: {
+    // @ts-ignore
+    transition: transitions.default,
     backgroundColor: colors.light.bg,
   },
   neoCard: {
@@ -106,12 +112,20 @@ const lightTheme = StyleSheet.create({
     animationTimingFunction: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
     animationFillMode: 'forwards',
   },
+  handle: {
+    backgroundColor: colors.light.handleMatter,
+  },
+  highlight: {
+    backgroundColor: colors.light.highlight,
+  },
 });
 const darkTheme = StyleSheet.create({
   text: {
     color: 'rgba(255, 255, 255, 0.8)',
   },
   bg: {
+    // @ts-ignore
+    transition: transitions.default,
     backgroundColor: colors.dark.bg,
   },
   neoCard: {
@@ -180,6 +194,12 @@ const darkTheme = StyleSheet.create({
     animationTimingFunction: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
     animationFillMode: 'forwards',
   },
+  handle: {
+    backgroundColor: colors.dark.handleMatter,
+  },
+  highlight: {
+    backgroundColor: colors.dark.highlight,
+  },
 });
 
 const themeStyles = {
@@ -197,6 +217,8 @@ const themeStyles = {
     neoTableRow: lightTheme.neoTableRow,
     neoTableRowHovered: lightTheme.neoTableRowHovered,
     bgOverlay: lightTheme.bgOverlay,
+    handle: lightTheme.handle,
+    highlight: lightTheme.highlight,
   },
   dark: {
     text: [baseTheme.text, darkTheme.text],
@@ -212,6 +234,8 @@ const themeStyles = {
     neoTableRow: darkTheme.neoTableRow,
     neoTableRowHovered: darkTheme.neoTableRowHovered,
     bgOverlay: darkTheme.bgOverlay,
+    handle: darkTheme.handle,
+    highlight: darkTheme.highlight,
   },
 };
 

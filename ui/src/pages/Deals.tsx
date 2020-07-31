@@ -16,57 +16,15 @@ import {
   lotusClient,
   epochToDate,
   formatPieceSize,
-} from './client';
-import Text from './components/Text';
-import Table from './components/Table';
-import Space from './components/Space';
-import {PageSheet} from './components/Sheets';
-import {VStack} from './components/Stack';
-import {Cid} from './sharedTypes';
-import {FilecoinNumber} from './utils/FilecoinNumber';
+} from '../client';
+import Text from '../components/Text';
+import Table from '../components/Table';
+import Space from '../components/Space';
+import {PageSheet} from '../components/Sheets';
+import {VStack} from '../components/Stack';
+import {Cid} from '../sharedTypes';
 
-// const getSyncState = (client: LotusClient) => client.syncState();
-
-const userIDQuery = selector<string>({
-  key: 'CurrentUserID',
-  get: async ({get}) => {
-    const client = get(lotusClient);
-    const addr = await client.walletDefaultAddress();
-    const userID = await client.stateLookupID(addr, []);
-    return userID;
-  },
-});
-
-const walletBalanceQuery = selector<string>({
-  key: 'WalletBalance',
-  get: async ({get}) => {
-    const client = get(lotusClient);
-    const addr = await client.walletDefaultAddress();
-    const balance = await client.walletBalance(addr);
-    return new FilecoinNumber(balance, 'attofil').toFixed(4);
-  },
-});
-
-const HomeTitle = () => {
-  const userID = useRecoilValue(userIDQuery);
-  const balance = useRecoilValue(walletBalanceQuery);
-  return (
-    <Space scale={3}>
-      <Text is="h1">Welcome, {userID}</Text>
-      <Space scale={4}>
-        <Text is="body">Here are the active deals on the Filecoin market</Text>
-      </Space>
-      <Space scale={2}>
-        <Text is="label">Balance</Text>
-        <Text is="balance">
-          <Text is="sups">⨎</Text>
-          {balance}
-        </Text>
-      </Space>
-    </Space>
-  );
-};
-
+/*
 const peersQuery = selector({
   key: 'NetPeers',
   get: async ({get}) => {
@@ -81,6 +39,7 @@ const PeersList = () => {
   console.log(peers);
   return null;
 };
+ */
 
 interface Deal {
   id: string;
@@ -262,7 +221,14 @@ const Home = () => {
   }, [navigate, signedIn]);
   return (
     <DealsTable>
-      <HomeTitle />
+      <VStack mt={7} mb={3}>
+        <Space scale={2}>
+          <Text is="h1">Market deals</Text>
+          <Text is="body">
+            List of storage deals between peers you are connected with
+          </Text>
+        </Space>
+      </VStack>
       <DealDetails />
     </DealsTable>
   );

@@ -73,7 +73,7 @@ const Table: React.FC<TableProps> = memo(({children, data, head, onSelect}) => {
     ),
     [children, head, renderItem]
   );
-  const keyExtractor = useCallback((item) => item[0], []);
+  const keyExtractor = useCallback((item) => item.id, []);
   const contStyle = useMemo(() => [styles.container, theme.bg], [theme.bg]);
   const getItemLayout = useCallback(
     (data, index) => ({length: 56, offset: 56 * index, index}),
