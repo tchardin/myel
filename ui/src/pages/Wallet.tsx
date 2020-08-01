@@ -5,7 +5,7 @@ import {lotusClient} from '../client';
 import {FilecoinNumber} from '../utils/FilecoinNumber';
 import Text from '../components/Text';
 import Space from '../components/Space';
-// const getSyncState = (client: LotusClient) => client.syncState();
+import {VStack} from '../components/Stack';
 
 const userIDQuery = selector<string>({
   key: 'CurrentUserID',
@@ -18,7 +18,11 @@ const userIDQuery = selector<string>({
 });
 const Title = () => {
   const userID = useRecoilValue(userIDQuery);
-  return <Text is="h2">Welcome, {userID}</Text>;
+  return (
+    <VStack mt={7}>
+      <Text is="h2">Welcome, {userID}</Text>
+    </VStack>
+  );
 };
 
 const walletBalanceQuery = selector<string>({

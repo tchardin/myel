@@ -24,8 +24,8 @@ const Item: React.FC<ItemProps> = ({children, path}) => {
       style={[
         styles.item,
         theme.bg,
-        isActive && theme.highlight,
         hovered && theme.neoTableRowHovered,
+        isActive && theme.highlight,
       ]}
       onPress={() => navigate(path)}
       {...handlers}>
@@ -44,10 +44,10 @@ const Toolbar = () => {
       <Item path="/">
         <List color="text" />
       </Item>
-      <Item path="/peers">
+      <Item path="/pieces">
         <Retrieving color="text" />
       </Item>
-      <Item path="/pieces">
+      <Item path="/peers">
         <Peers color="text" />
       </Item>
       <Item path="/adjust">
