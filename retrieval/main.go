@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ipfs/go-cid"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/peer"
@@ -24,6 +25,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+const HandshakeTopic = "/myel/handshake/1.0.0"
 
 func main() {
 	if err := run(); err != nil {
@@ -44,7 +47,7 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("Unable to create gossipsub client: %s", err)
 	}
-	hs, err := NewHandshake(ctx, ps, h.ID())
+	hs, err := NewChannel(ctx, HandshakeTopic, ps, h.ID())
 	if err != nil {
 		return fmt.Errorf("Unable to start handshake channel: %s", err)
 	}
@@ -57,7 +60,7 @@ func run() error {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
-	// block execution until we find the faucet
+	// block execution until we find the faucet we expect a single peer at this point
 	peer := <-disc.ConnectedPeers
 	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
 
@@ -67,18 +70,16 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	time.Sleep(2 * time.Second)
-	id, err := fcw.CurrentUserID()
-	if err != nil {
-		return err
-	}
-
-	err = hs.Publish(id.String())
-	if err != nil {
-		return err
-	}
-
 	donec := make(chan struct{}, 1)
+	v := &Valve{
+		Self: h.ID(),
+		dict: make(map[string]cid.Cid),
+		hs:   hs,
+		fcw:  fcw,
+		ps:   ps,
+		ctx:  ctx,
+	}
+	go v.Open()
 
 	stop := make(chan os.Signal, 1)
 
@@ -90,6 +91,46 @@ func run() error {
 		h.Close()
 	}
 	return nil
+}
+
+// ==================================================================================
+// Faucet connection and business logic
+type Valve struct {
+	Self peer.ID
+	// dictionary to keep track of our deals
+	dict map[string]cid.Cid
+	// keep reference of the handshake enabling the Valve
+	hs *Channel
+	// connection with our lotus node
+	fcw *FilecoinWrapper
+	// keep our pubsub instance to listen to new topics
+	ps *pubsub.PubSub
+
+	ctx context.Context
+}
+
+func (v *Valve) Open() error {
+	id, err := v.fcw.CurrentUserID()
+	if err != nil {
+		return err
+	}
+
+	err = v.hs.Publish(id.String())
+	if err != nil {
+		return err
+	}
+	topic := fmt.Sprintln("/myel/faucet/", id, "/1.0.0")
+	c, err := NewChannel(v.ctx, topic, v.ps, v.Self)
+	if err != nil {
+		return err
+	}
+	m := <-c.Messages
+	go v.HandlePiece(m.Payload)
+	return nil
+}
+
+func (v *Valve) HandlePiece(rawCid string) {
+	log.Info().Str("cid", rawCid).Msg("New message received")
 }
 
 // ==================================================================================
@@ -180,13 +221,10 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 // ================================================================================
 // Handshake protocol - same code for faucet node
 
-const HandshakeTopic = "/libp2p/myel-handshake/1.0.0"
-const HandshakeBufSize = 128
-// Handshake represents a subscription to the handshake topic for establishing the
-// relationship between a miner and the faucet
-type Handshake struct {
+const BufSize = 128
+type Channel struct {
 	// Messages is a channel of request and responses for faucet access
-	Messages chan *HsMessage
+	Messages chan *Message
 
 	ctx   context.Context
 	ps    *pubsub.PubSub
@@ -196,13 +234,13 @@ type Handshake struct {
 	self peer.ID
 }
 
-type HsMessage struct {
-	Message  string
+type Message struct {
+	Payload  string
 	SenderID string
 }
 
-func NewHandshake(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID) (*Handshake, error) {
-	topic, err := ps.Join(HandshakeTopic)
+func NewChannel(ctx context.Context, topicName string, ps *pubsub.PubSub, selfID peer.ID) (*Channel, error) {
+	topic, err := ps.Join(topicName)
 	if err != nil {
 		return nil, err
 	}
@@ -212,51 +250,51 @@ func NewHandshake(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID) (*Hand
 		return nil, err
 	}
 
-	hs := &Handshake{
+	c := &Channel{
 		ctx:      ctx,
 		ps:       ps,
 		sub:      sub,
 		self:     selfID,
 		topic:    topic,
-		Messages: make(chan *HsMessage, HandshakeBufSize),
+		Messages: make(chan *Message, BufSize),
 	}
-	log.Info().Msg("Starting handshake read loop")
-	go hs.ReadLoop()
-	return hs, nil
+	log.Info().Msg("Starting channel read loop")
+	go c.ReadLoop()
+	return c, nil
 }
 
 // ReadLoop pulls messages from the pubsub topic and pushes them onto the Messages channel.
-func (hs *Handshake) ReadLoop() {
+func (c *Channel) ReadLoop() {
 	for {
-		msg, err := hs.sub.Next(hs.ctx)
+		msg, err := c.sub.Next(c.ctx)
 		if err != nil {
-			close(hs.Messages)
+			close(c.Messages)
 			return
 		}
 		// only forward messages delivered by others
-		if msg.ReceivedFrom == hs.self {
+		if msg.ReceivedFrom == c.self {
 			continue
 		}
-		cm := new(HsMessage)
+		cm := new(Message)
 		err = json.Unmarshal(msg.Data, cm)
 		if err != nil {
 			continue
 		}
 		// send valid messages onto the Messages channel
-		hs.Messages <- cm
+		c.Messages <- cm
 	}
 }
 
 // Publish sends messages to the pubsub topic
-func (hs *Handshake) Publish(msg string) error {
+func (c *Channel) Publish(msg string) error {
 	log.Info().Str("msg", msg).Msg("Publishing")
-	m := HsMessage{
-		Message:  msg,
-		SenderID: hs.self.Pretty(),
+	m := Message{
+		Payload:  msg,
+		SenderID: c.self.Pretty(),
 	}
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
-	return hs.topic.Publish(hs.ctx, msgBytes)
+	return c.topic.Publish(c.ctx, msgBytes)
 }

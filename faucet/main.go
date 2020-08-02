@@ -17,6 +17,8 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/discovery"
 )
 
+const HandshakeTopic = "/myel/handshake/1.0.0"
+
 func main() {
 	if err := run(); err != nil {
 		log.Fatal().Err(err).Msg("Received err from run func, exiting...")
@@ -40,7 +42,7 @@ func run() error {
 		return fmt.Errorf("Unable to create gossip sub client: %s", err)
 	}
 
-	hs, err := NewHandshake(ctx, ps, selfID)
+	hs, err := NewChannel(ctx, HandshakeTopic, ps, selfID)
 	if err != nil {
 		return fmt.Errorf("Unable to subscribe to handshake topic: %s", err)
 	}
@@ -50,13 +52,21 @@ func run() error {
 	}
 
 	// setup local mDNS discovery
-	err = setupDiscovery(ctx, h)
+	_, err = setupDiscovery(ctx, h)
 	if err != nil {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
 	donec := make(chan struct{}, 1)
-	go handleEvents(hs)
+
+	spk := &Sprinkler{
+		Pending: make(chan *Target, 1),
+		Self:    selfID,
+		ctx:     ctx,
+		ps:      ps,
+	}
+	go spk.LoadTargets(hs)
+	go spk.Start()
 
 	stop := make(chan os.Signal, 1)
 
@@ -71,12 +81,47 @@ func run() error {
 	return nil
 }
 
+const ExampleCid = "bafkreicj7sktcsxh5kxcz6bbqjpthlqns3xk6tdb5arlkjr3znbyqzilbi"
+
+type Target struct {
+	MinerID string
+	PeerID  string
+}
+
+// interface to sprinkle new cids across the network
+type Sprinkler struct {
+	Pending chan *Target
+	Self    peer.ID
+
+	ctx context.Context
+	ps  *pubsub.PubSub
+}
+
+func (s *Sprinkler) Start() {
+	for t := range s.Pending {
+		go s.StartChannel(t)
+	}
+}
+
+func (s *Sprinkler) StartChannel(t *Target) error {
+	topic := fmt.Sprintln("/myel/faucet/", t.MinerID, "/1.0.0")
+	c, err := NewChannel(s.ctx, topic, s.ps, s.Self)
+
+	if err != nil {
+		log.Error().Err(err).Str("topic", topic).Msg("Failed to start new pubsub channel")
+		return fmt.Errorf("Failed to start new pubsub channel")
+	}
+	c.Publish(ExampleCid)
+	return nil
+}
+
 // Handle handshake requests
-func handleEvents(hs *Handshake) {
-	for {
-		select {
-		case m := <-hs.Messages:
-			log.Info().Str("msg", m.Message).Msg("New message received")
+func (s *Sprinkler) LoadTargets(c *Channel) {
+	for m := range c.Messages {
+		log.Info().Str("miner", m.Payload).Msg("New message received")
+		s.Pending <- &Target{
+			MinerID: m.Payload,
+			PeerID:  m.SenderID,
 		}
 	}
 }
@@ -86,39 +131,41 @@ func handleEvents(hs *Handshake) {
 const DiscoveryInterval = time.Hour
 const DiscoveryServiceTag = "Myel"
 
-type discoveryNotifee struct {
-	h host.Host
+type DiscoveryNotifee struct {
+	h              host.Host
+	ConnectedPeers chan *peer.AddrInfo
 }
 
-func (n *discoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
-	fmt.Printf("discovered new peer %s\n", pi.ID.Pretty())
+func (n *DiscoveryNotifee) HandlePeerFound(pi peer.AddrInfo) {
 	err := n.h.Connect(context.Background(), pi)
 	if err != nil {
 		fmt.Printf("error connecting to peer %s: %s\n", pi.ID.Pretty(), err)
 	}
+	n.ConnectedPeers <- &pi
 }
 
-func setupDiscovery(ctx context.Context, h host.Host) error {
+func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error) {
 	// setup mDNS discovery to find local peers
 	disc, err := discovery.NewMdnsService(ctx, h, DiscoveryInterval, DiscoveryServiceTag)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	n := discoveryNotifee{h: h}
-	disc.RegisterNotifee(&n)
-	return nil
+	n := &DiscoveryNotifee{
+		h:              h,
+		ConnectedPeers: make(chan *peer.AddrInfo, 1),
+	}
+	disc.RegisterNotifee(n)
+	return n, nil
 }
 
 // ==================================================================
 // Handshake protocol to be moved in its own module for reusing
 
-const HandshakeTopic = "/libp2p/myel-handshake/1.0.0"
-const HandshakeBufSize = 128
-// Handshake represents a subscription to the handshake topic for establishing the
-// relationship between a miner and the faucet
-type Handshake struct {
-	// Messages is a channel of request and responses for faucet access
-	Messages chan *HsMessage
+// might need to pass as a param to NewChannel too
+const BufSize = 128
+// Channel represents a subscription to a topic
+type Channel struct {
+	Messages chan *Message
 
 	ctx   context.Context
 	ps    *pubsub.PubSub
@@ -128,13 +175,13 @@ type Handshake struct {
 	self peer.ID
 }
 
-type HsMessage struct {
-	Message  string
+type Message struct {
+	Payload  string
 	SenderID string
 }
 
-func NewHandshake(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID) (*Handshake, error) {
-	topic, err := ps.Join(HandshakeTopic)
+func NewChannel(ctx context.Context, topicName string, ps *pubsub.PubSub, selfID peer.ID) (*Channel, error) {
+	topic, err := ps.Join(topicName)
 	if err != nil {
 		return nil, err
 	}
@@ -144,51 +191,51 @@ func NewHandshake(ctx context.Context, ps *pubsub.PubSub, selfID peer.ID) (*Hand
 		return nil, err
 	}
 
-	hs := &Handshake{
+	c := &Channel{
 		ctx:      ctx,
 		ps:       ps,
 		sub:      sub,
 		self:     selfID,
 		topic:    topic,
-		Messages: make(chan *HsMessage, HandshakeBufSize),
+		Messages: make(chan *Message, BufSize),
 	}
-	log.Info().Msg("Starting handshake read loop")
-	go hs.readLoop()
-	return hs, nil
+	log.Info().Msg("Starting channel read loop")
+	go c.readLoop()
+	return c, nil
 }
 
 // readLoop pulls messages from the pubsub topic and pushes them onto the Messages channel.
-func (hs *Handshake) readLoop() {
+func (c *Channel) readLoop() {
 	for {
-		msg, err := hs.sub.Next(hs.ctx)
+		msg, err := c.sub.Next(c.ctx)
 		if err != nil {
-			close(hs.Messages)
+			close(c.Messages)
 			return
 		}
 		// only forward messages delivered by others
-		if msg.ReceivedFrom == hs.self {
+		if msg.ReceivedFrom == c.self {
 			continue
 		}
-		cm := new(HsMessage)
-		err = json.Unmarshal(msg.Data, cm)
+		m := new(Message)
+		err = json.Unmarshal(msg.Data, m)
 		if err != nil {
 			continue
 		}
 		// send valid messages onto the Messages channel
-		hs.Messages <- cm
+		c.Messages <- m
 	}
 }
 
-// Publis sends messages to the pubsub topic
-func (hs *Handshake) Publish(msg string) error {
+// Publish sends messages to the pubsub topic
+func (c *Channel) Publish(msg string) error {
 	log.Info().Str("msg", msg).Msg("Publishing")
-	m := HsMessage{
-		Message:  msg,
-		SenderID: hs.self.Pretty(),
+	m := Message{
+		Payload:  msg,
+		SenderID: c.self.Pretty(),
 	}
 	msgBytes, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
-	return hs.topic.Publish(hs.ctx, msgBytes)
+	return c.topic.Publish(c.ctx, msgBytes)
 }

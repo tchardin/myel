@@ -7,6 +7,7 @@ require (
 	github.com/filecoin-project/go-jsonrpc v0.1.1-0.20200602181149-522144ab4e24
 	github.com/filecoin-project/lotus v0.4.2
 	github.com/gdamore/tcell v1.3.0
+	github.com/ipfs/go-cid v0.0.7
 	github.com/libp2p/go-libp2p v0.10.2
 	github.com/libp2p/go-libp2p-core v0.6.1
 	github.com/libp2p/go-libp2p-pubsub v0.3.3
