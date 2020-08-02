@@ -40,7 +40,7 @@ func run() error {
 		return fmt.Errorf("Unable to create gossip sub client: %s", err)
 	}
 
-	_, err = NewHandshake(ctx, ps, selfID)
+	hs, err := NewHandshake(ctx, ps, selfID)
 	if err != nil {
 		return fmt.Errorf("Unable to subscribe to handshake topic: %s", err)
 	}
@@ -56,6 +56,7 @@ func run() error {
 	}
 
 	donec := make(chan struct{}, 1)
+	go handleEvents(hs)
 
 	stop := make(chan os.Signal, 1)
 
@@ -68,6 +69,16 @@ func run() error {
 	}
 
 	return nil
+}
+
+// Handle handshake requests
+func handleEvents(hs *Handshake) {
+	for {
+		select {
+		case m := <-hs.Messages:
+			log.Info().Str("msg", m.Message).Msg("New message received")
+		}
+	}
 }
 
 // ==================================================================
@@ -93,7 +104,6 @@ func setupDiscovery(ctx context.Context, h host.Host) error {
 	if err != nil {
 		return err
 	}
-
 	n := discoveryNotifee{h: h}
 	disc.RegisterNotifee(&n)
 	return nil

@@ -16,6 +16,7 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/discovery"
 
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/lotus/api"
 	client "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -56,10 +57,13 @@ func run() error {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
+	// block execution until we find the faucet
 	peer := <-disc.ConnectedPeers
 	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
 
-	fcw, err := NewFilecoinWrapper()
+	// Now we can startup our lotus rpc
+	fcw, closer, err := NewFilecoinWrapper()
+	defer closer()
 	if err != nil {
 		return err
 	}
@@ -95,7 +99,7 @@ type FilecoinWrapper struct {
 	rpc api.FullNode
 }
 
-func NewFilecoinWrapper() (*FilecoinWrapper, error) {
+func NewFilecoinWrapper() (*FilecoinWrapper, jsonrpc.ClientCloser, error) {
 	fs := flag.NewFlagSet("node", flag.ExitOnError)
 	var (
 		authToken = fs.String("auth_token", "", "authorization token for lotus daemon")
@@ -104,7 +108,7 @@ func NewFilecoinWrapper() (*FilecoinWrapper, error) {
 	if err := ff.Parse(fs, os.Args[1:],
 		ff.WithEnvVarPrefix("HACKFS_NODE"),
 	); err != nil {
-		return nil, fmt.Errorf("Unable to parse flags: %s", err)
+		return nil, nil, fmt.Errorf("Unable to parse flags: %s", err)
 	}
 
 	rpc, closer, err := client.NewFullNodeRPC("ws://localhost:1234/rpc/v0", http.Header{
@@ -116,16 +120,14 @@ func NewFilecoinWrapper() (*FilecoinWrapper, error) {
 			Str("auth token", *authToken).
 			Msg("Unable to connect to lotus daemon - should confirm the daemon running and an authentication token is supplied")
 
-		return nil, fmt.Errorf("unable to create common RPC client: %s", err)
+		return nil, nil, fmt.Errorf("unable to create common RPC client: %s", err)
 	}
 	log.Info().Msg("Connected to lotus daemon")
-
-	defer closer()
 
 	fcw := &FilecoinWrapper{
 		rpc: rpc,
 	}
-	return fcw, nil
+	return fcw, closer, nil
 }
 
 func (fcw *FilecoinWrapper) CurrentUserID() (address.Address, error) {

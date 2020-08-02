@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/filecoin-project/go-address v0.0.2-0.20200504173055-8b6f2fb2b3ef
+	github.com/filecoin-project/go-jsonrpc v0.1.1-0.20200602181149-522144ab4e24
 	github.com/filecoin-project/lotus v0.4.2
 	github.com/gdamore/tcell v1.3.0
 	github.com/libp2p/go-libp2p v0.10.2
