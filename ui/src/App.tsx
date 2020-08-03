@@ -1,19 +1,37 @@
-import React from 'react';
+import * as React from 'react';
+import {Suspense, lazy} from 'react';
+import {Routes, Route} from 'react-router-dom';
+import AppLayout from './components/AppLayout';
+import ErrorBoundary from './utils/ErrorBoundary';
+import ErrorFallback from './components/ErrorFallback';
 
-import Text from './components/Text';
-import Main from './components/Main';
-import Scroll from './components/Scroll';
-import Banner from './components/Banner';
+/* const Auth = lazy(() => import('./pages/Auth')); */
+const Deals = lazy(() => import('./pages/Deals'));
+const Wallet = lazy(() => import('./pages/Wallet'));
 
-function App() {
+const App = () => {
   return (
-    <Scroll>
-      <Banner />
-      <Main>
-        <Text is="title">Hello Hack FS</Text>
-      </Main>
-    </Scroll>
+    <AppLayout
+      master={
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <Suspense fallback={null}>
+            <Wallet />
+          </Suspense>
+        </ErrorBoundary>
+      }
+      detail={
+        <ErrorBoundary fallback={<ErrorFallback />}>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/">
+                <Deals />
+              </Route>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      }
+    />
   );
-}
+};
 
 export default App;
