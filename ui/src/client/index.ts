@@ -1,2 +1,2 @@
 export {signedInState, useAuth, initializeState} from './auth';
-export {lotusClient, epochToDate, formatPieceSize} from './LotusProvider';
+export {rpcClient, epochToDate, formatPieceSize} from './clients';

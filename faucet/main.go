@@ -60,7 +60,7 @@ func run() error {
 	donec := make(chan struct{}, 1)
 
 	spk := &Sprinkler{
-		Pending: make(chan *Target, 1),
+		Pending: make(chan *Target),
 		Self:    selfID,
 		ctx:     ctx,
 		ps:      ps,
@@ -152,7 +152,7 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 	}
 	n := &DiscoveryNotifee{
 		h:              h,
-		ConnectedPeers: make(chan *peer.AddrInfo, 1),
+		ConnectedPeers: make(chan *peer.AddrInfo),
 	}
 	disc.RegisterNotifee(n)
 	return n, nil
@@ -161,8 +161,6 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 // ==================================================================
 // Handshake protocol to be moved in its own module for reusing
 
-// might need to pass as a param to NewChannel too
-const BufSize = 128
 // Channel represents a subscription to a topic
 type Channel struct {
 	Messages chan *Message
@@ -197,7 +195,7 @@ func NewChannel(ctx context.Context, topicName string, ps *pubsub.PubSub, selfID
 		sub:      sub,
 		self:     selfID,
 		topic:    topic,
-		Messages: make(chan *Message, BufSize),
+		Messages: make(chan *Message),
 	}
 	log.Info().Msg("Starting channel read loop")
 	go c.readLoop()

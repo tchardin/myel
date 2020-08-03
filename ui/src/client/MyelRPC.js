@@ -1,13 +1,8 @@
-// https://github.com/filecoin-shipyard/js-lotus-client-rpc/blob/c6b2e90acfdc95182c84cc7c664ad1688931706a/index.js
-//
-const overrideSubs = {
-  MpoolSub: true,
-};
+// MyelRPC selects the relevant provider based on the method called
 
-class LotusRPC {
-  constructor(provider, {schema}) {
-    this.provider = provider;
-    this.schema = schema;
+class MyelRPC {
+  constructor(config) {
+    const {myel, lotusFullNode, lotusStorageMiner} = config;
     return new Proxy(this, {
       get: (obj, prop) => {
         if (prop in obj) {
@@ -22,26 +17,36 @@ class LotusRPC {
           return undefined;
         } else {
           const method = prop.charAt(0).toUpperCase() + prop.slice(1);
-          const schemaMethod = schema.methods[method];
-          if (schemaMethod) {
-            if (schemaMethod.subscription || overrideSubs[method]) {
-              return this.callSchemaMethodSub.bind(this, method, schemaMethod);
-            } else {
-              return this.callSchemaMethod.bind(this, method, schemaMethod);
-            }
+          if (method in myel.schema.methods) {
+            this.provider = myel.provider;
+            this.schema = myel.schema;
+            this.tag = myel.tag;
+          } else if (method in lotusFullNode.schema.methods) {
+            this.provider = lotusFullNode.provider;
+            this.schema = lotusFullNode.schema;
+            this.tag = lotusFullNode.tag;
+          } else if (method in lotusStorageMiner.schema.methods) {
+            this.provider = lotusStorageMiner.provider;
+            this.schema = lotusStorageMiner.schema.methods;
+            this.tag = lotusStorageMiner.tag;
           } else {
             // FIXME: throw?
             console.warn(`Unknown method ${method}`);
+          }
+          const schemaMethod = this.schema.methods[method];
+          if (schemaMethod.subscription) {
+            return this.callSchemaMethodSub.bind(this, method, schemaMethod);
+          } else {
+            return this.callSchemaMethod.bind(this, method, schemaMethod);
           }
         }
       },
     });
   }
-
   async callSchemaMethod(method, schemaMethod, ...args) {
     await this.provider.connect();
     const request = {
-      method: `Filecoin.${method}`,
+      method: `${this.tag}.${method}`,
     };
     request.params = args;
     return this.provider.send(request, schemaMethod);
@@ -50,7 +55,7 @@ class LotusRPC {
   callSchemaMethodSub(method, schemaMethod, ...args) {
     // await this.provider.connect()
     const request = {
-      method: `Filecoin.${method}`,
+      method: `${this.tag}.${method}`,
     };
     const cb = args[0];
     request.params = args.slice(1);
@@ -66,4 +71,4 @@ class LotusRPC {
   }
 }
 
-export default LotusRPC;
+export default MyelRPC;

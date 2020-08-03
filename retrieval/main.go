@@ -27,6 +27,7 @@ import (
 )
 
 const HandshakeTopic = "/myel/handshake/1.0.0"
+const RPCPort = ":4321"
 
 func main() {
 	if err := run(); err != nil {
@@ -60,10 +61,6 @@ func run() error {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
-	// block execution until we find the faucet we expect a single peer at this point
-	peer := <-disc.ConnectedPeers
-	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
-
 	// Now we can startup our lotus rpc
 	fcw, closer, err := NewFilecoinWrapper()
 	defer closer()
@@ -71,14 +68,18 @@ func run() error {
 		return err
 	}
 	donec := make(chan struct{}, 1)
+	newCids := make(chan *cid.Cid)
 	v := &Valve{
-		Self: h.ID(),
-		dict: make(map[string]cid.Cid),
-		hs:   hs,
-		fcw:  fcw,
-		ps:   ps,
-		ctx:  ctx,
+		Self:    h.ID(),
+		Dict:    make(map[string]cid.Cid),
+		Updates: newCids,
+		hs:      hs,
+		fcw:     fcw,
+		ps:      ps,
+		ctx:     ctx,
+		disc:    disc,
 	}
+	go serveRPC(v)
 	go v.Open()
 
 	stop := make(chan os.Signal, 1)
@@ -93,12 +94,43 @@ func run() error {
 	return nil
 }
 
+// =================================================================================
+// Expose RPC methods to UI
+
+type RetrievalServerHandler struct {
+	n int
+	v *Valve
+}
+
+func (h *RetrievalServerHandler) AddGet(in int) int {
+	h.n += in
+	return h.n
+}
+
+func (h *RetrievalServerHandler) NewCidNotify() <-chan *cid.Cid {
+	return h.v.Updates
+}
+
+func serveRPC(v *Valve) error {
+	serverHandler := &RetrievalServerHandler{
+		v: v,
+	}
+	rpcServer := jsonrpc.NewServer()
+	rpcServer.Register("MyelRetrieval", serverHandler)
+
+	http.Handle("/rpc/v0", rpcServer)
+	log.Info().Str("port", RPCPort).Msg("Starting RPC")
+	return http.ListenAndServe(RPCPort, nil)
+}
+
 // ==================================================================================
 // Faucet connection and business logic
 type Valve struct {
 	Self peer.ID
 	// dictionary to keep track of our deals
-	dict map[string]cid.Cid
+	Dict map[string]cid.Cid
+	// broadcast new content
+	Updates chan *cid.Cid
 	// keep reference of the handshake enabling the Valve
 	hs *Channel
 	// connection with our lotus node
@@ -107,9 +139,15 @@ type Valve struct {
 	ps *pubsub.PubSub
 
 	ctx context.Context
+	// keep track of peer discovery
+	disc *DiscoveryNotifee
 }
 
 func (v *Valve) Open() error {
+	// block execution until we find the faucet we expect a single peer at this point
+	peer := <-v.disc.ConnectedPeers
+	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
+
 	id, err := v.fcw.CurrentUserID()
 	if err != nil {
 		return err
@@ -129,8 +167,18 @@ func (v *Valve) Open() error {
 	return nil
 }
 
-func (v *Valve) HandlePiece(rawCid string) {
+// TODO:
+// 1) Retrieve content associated with a piece
+// 2) Open pubsub channel to start sending events
+// 3) Handle deal requests about a piece
+func (v *Valve) HandlePiece(rawCid string) error {
 	log.Info().Str("cid", rawCid).Msg("New message received")
+	c, err := cid.Decode(rawCid)
+	if err != nil {
+		return fmt.Errorf("Unable to decode received cid: %s", err)
+	}
+	v.Updates <- &c
+	return nil
 }
 
 // ==================================================================================
@@ -212,7 +260,7 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 
 	n := &DiscoveryNotifee{
 		h:              h,
-		ConnectedPeers: make(chan *peer.AddrInfo, 1),
+		ConnectedPeers: make(chan *peer.AddrInfo),
 	}
 	disc.RegisterNotifee(n)
 	return n, nil
@@ -221,7 +269,6 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 // ================================================================================
 // Handshake protocol - same code for faucet node
 
-const BufSize = 128
 type Channel struct {
 	// Messages is a channel of request and responses for faucet access
 	Messages chan *Message
@@ -256,7 +303,7 @@ func NewChannel(ctx context.Context, topicName string, ps *pubsub.PubSub, selfID
 		sub:      sub,
 		self:     selfID,
 		topic:    topic,
-		Messages: make(chan *Message, BufSize),
+		Messages: make(chan *Message),
 	}
 	log.Info().Msg("Starting channel read loop")
 	go c.ReadLoop()

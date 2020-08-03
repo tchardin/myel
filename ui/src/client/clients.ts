@@ -1,14 +1,16 @@
 import {atom} from 'recoil';
-import LotusRPC from './LotusRPC';
+import MyelRPC from './MyelRPC';
 import BrowserProvider from './BrowserProvider';
 // @ts-ignore: no types for module
 import {testnet} from '@filecoin-shipyard/lotus-client-schema';
 
 // TODO: maybe we can do typing for this
-export type LotusClient = any;
+export type MyelClient = any;
 
-export interface LotusConfig {
-  url: string;
+export interface ClientConfig {
+  fullNodeUrl: string;
+  storageNodeUrl: string;
+  myelUrl: string;
   token: string;
 }
 
@@ -36,16 +38,40 @@ export const formatPieceSize = (
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-export const createLotus = (url: string, token: string): any =>
-  new LotusRPC(
-    new BrowserProvider(url, {
-      token,
-    }),
-    {schema: testnet.fullNode}
-  );
+export const createClient = (config: ClientConfig): any =>
+  new MyelRPC({
+    myel: {
+      provider: new BrowserProvider(config.myelUrl, {
+        token: config.token,
+      }),
+      schema: {
+        methods: {
+          AddGet: {},
+          NewCidNotify: {
+            subscription: true,
+          },
+        },
+      },
+      tag: 'MyelRetrieval',
+    },
+    lotusFullNode: {
+      provider: new BrowserProvider(config.fullNodeUrl, {
+        token: config.token,
+      }),
+      schema: testnet.fullNode,
+      tag: 'Filecoin',
+    },
+    lotusStorageMiner: {
+      provider: new BrowserProvider(config.storageNodeUrl, {
+        token: config.token,
+      }),
+      schema: testnet.storageMiner,
+      tag: 'Filecoin',
+    },
+  });
 
-export const lotusClient = atom<LotusClient>({
-  key: 'lotusClient',
+export const rpcClient = atom<MyelClient>({
+  key: 'RPCClient',
   default: null,
   dangerouslyAllowMutability: true,
 });

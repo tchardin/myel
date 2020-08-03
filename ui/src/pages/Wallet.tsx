@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Suspense} from 'react';
 import {selector, useRecoilValue} from 'recoil';
-import {lotusClient} from '../client';
+import {rpcClient} from '../client';
 import {FilecoinNumber} from '../utils/FilecoinNumber';
 import Text from '../components/Text';
 import Space from '../components/Space';
@@ -10,7 +10,7 @@ import {VStack} from '../components/Stack';
 const userIDQuery = selector<string>({
   key: 'CurrentUserID',
   get: async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const addr = await client.walletDefaultAddress();
     const userID = await client.stateLookupID(addr, []);
     return userID;
@@ -28,7 +28,7 @@ const Title = () => {
 const walletBalanceQuery = selector<string>({
   key: 'WalletBalance',
   get: async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const addr = await client.walletDefaultAddress();
     const balance = await client.walletBalance(addr);
     return new FilecoinNumber(balance, 'attofil').toFixed(4);
@@ -62,7 +62,7 @@ type NodeInfo = {
 const statusQuery = selector({
   key: 'NodeStatus',
   get: async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const info = await client.version();
     return {
       version: info.Version,
