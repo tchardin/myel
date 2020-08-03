@@ -68,7 +68,7 @@ func run() error {
 		return err
 	}
 	donec := make(chan struct{}, 1)
-	newCids := make(chan *cid.Cid, 20)
+	newCids := make(chan *cid.Cid)
 	v := &Valve{
 		Self:    h.ID(),
 		Dict:    make(map[string]cid.Cid),
@@ -260,7 +260,7 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 
 	n := &DiscoveryNotifee{
 		h:              h,
-		ConnectedPeers: make(chan *peer.AddrInfo, 1),
+		ConnectedPeers: make(chan *peer.AddrInfo),
 	}
 	disc.RegisterNotifee(n)
 	return n, nil
@@ -269,7 +269,6 @@ func setupDiscovery(ctx context.Context, h host.Host) (*DiscoveryNotifee, error)
 // ================================================================================
 // Handshake protocol - same code for faucet node
 
-const BufSize = 128
 type Channel struct {
 	// Messages is a channel of request and responses for faucet access
 	Messages chan *Message
@@ -304,7 +303,7 @@ func NewChannel(ctx context.Context, topicName string, ps *pubsub.PubSub, selfID
 		sub:      sub,
 		self:     selfID,
 		topic:    topic,
-		Messages: make(chan *Message, BufSize),
+		Messages: make(chan *Message),
 	}
 	log.Info().Msg("Starting channel read loop")
 	go c.ReadLoop()
