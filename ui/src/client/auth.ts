@@ -5,7 +5,7 @@ import {
   useRecoilValue,
   RecoilRootProps,
 } from 'recoil';
-import {rpcClient, createClient, ClientConfig} from './LotusProvider';
+import {rpcClient, createClient, ClientConfig} from './clients';
 
 const STORAGE_KEY = '@Myel';
 

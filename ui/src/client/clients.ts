@@ -1,5 +1,4 @@
 import {atom} from 'recoil';
-/* import LotusRPC from './LotusRPC'; */
 import MyelRPC from './MyelRPC';
 import BrowserProvider from './BrowserProvider';
 // @ts-ignore: no types for module
