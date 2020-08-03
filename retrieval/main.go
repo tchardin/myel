@@ -27,31 +27,13 @@ import (
 )
 
 const HandshakeTopic = "/myel/handshake/1.0.0"
+const RPCPort = ":4321"
 
 func main() {
-	if err := serveRPC(); err != nil {
+	if err := run(); err != nil {
 		log.Fatal().Err(err).Msg("Received err from run func, exiting...")
 	}
 }
-
-type RetrievalServerHandler struct {
-	n int
-}
-
-func (h *RetrievalServerHandler) AddGet(in int) int {
-	h.n += in
-	return h.n
-}
-
-func serveRPC() error {
-	serverHandler := &RetrievalServerHandler{}
-	rpcServer := jsonrpc.NewServer()
-	rpcServer.Register("RetrievalServerHandler", serverHandler)
-
-	http.Handle("/rpc/v0", rpcServer)
-	return http.ListenAndServe(":4321", nil)
-}
-
 func run() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	ctx := context.Background()
@@ -79,10 +61,6 @@ func run() error {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
-	// block execution until we find the faucet we expect a single peer at this point
-	peer := <-disc.ConnectedPeers
-	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
-
 	// Now we can startup our lotus rpc
 	fcw, closer, err := NewFilecoinWrapper()
 	defer closer()
@@ -90,14 +68,18 @@ func run() error {
 		return err
 	}
 	donec := make(chan struct{}, 1)
+	newCids := make(chan *cid.Cid, 20)
 	v := &Valve{
-		Self: h.ID(),
-		dict: make(map[string]cid.Cid),
-		hs:   hs,
-		fcw:  fcw,
-		ps:   ps,
-		ctx:  ctx,
+		Self:    h.ID(),
+		Dict:    make(map[string]cid.Cid),
+		Updates: newCids,
+		hs:      hs,
+		fcw:     fcw,
+		ps:      ps,
+		ctx:     ctx,
+		disc:    disc,
 	}
+	go serveRPC(v)
 	go v.Open()
 
 	stop := make(chan os.Signal, 1)
@@ -112,12 +94,43 @@ func run() error {
 	return nil
 }
 
+// =================================================================================
+// Expose RPC methods to UI
+
+type RetrievalServerHandler struct {
+	n int
+	v *Valve
+}
+
+func (h *RetrievalServerHandler) AddGet(in int) int {
+	h.n += in
+	return h.n
+}
+
+func (h *RetrievalServerHandler) NewCidNotify() <-chan *cid.Cid {
+	return h.v.Updates
+}
+
+func serveRPC(v *Valve) error {
+	serverHandler := &RetrievalServerHandler{
+		v: v,
+	}
+	rpcServer := jsonrpc.NewServer()
+	rpcServer.Register("MyelRetrieval", serverHandler)
+
+	http.Handle("/rpc/v0", rpcServer)
+	log.Info().Str("port", RPCPort).Msg("Starting RPC")
+	return http.ListenAndServe(RPCPort, nil)
+}
+
 // ==================================================================================
 // Faucet connection and business logic
 type Valve struct {
 	Self peer.ID
 	// dictionary to keep track of our deals
-	dict map[string]cid.Cid
+	Dict map[string]cid.Cid
+	// broadcast new content
+	Updates chan *cid.Cid
 	// keep reference of the handshake enabling the Valve
 	hs *Channel
 	// connection with our lotus node
@@ -126,9 +139,15 @@ type Valve struct {
 	ps *pubsub.PubSub
 
 	ctx context.Context
+	// keep track of peer discovery
+	disc *DiscoveryNotifee
 }
 
 func (v *Valve) Open() error {
+	// block execution until we find the faucet we expect a single peer at this point
+	peer := <-v.disc.ConnectedPeers
+	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
+
 	id, err := v.fcw.CurrentUserID()
 	if err != nil {
 		return err
@@ -148,8 +167,18 @@ func (v *Valve) Open() error {
 	return nil
 }
 
-func (v *Valve) HandlePiece(rawCid string) {
+// TODO:
+// 1) Retrieve content associated with a piece
+// 2) Open pubsub channel to start sending events
+// 3) Handle deal requests about a piece
+func (v *Valve) HandlePiece(rawCid string) error {
 	log.Info().Str("cid", rawCid).Msg("New message received")
+	c, err := cid.Decode(rawCid)
+	if err != nil {
+		return fmt.Errorf("Unable to decode received cid: %s", err)
+	}
+	v.Updates <- &c
+	return nil
 }
 
 // ==================================================================================

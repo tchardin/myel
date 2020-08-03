@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useMemo, Suspense} from 'react';
+import {useMemo, useEffect, Suspense} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   useRecoilValue,
@@ -40,6 +40,22 @@ const PeersList = () => {
   return null;
 };
  */
+
+const suggestedCidsState = atom<Cid[]>({
+  key: 'SuggestedCIDs',
+  default: [],
+});
+
+const SuggestedCIDsSubscription = () => {
+  const client = useRecoilValue(rpcClient);
+  const [cidList, setNewCIDS] = useRecoilState(suggestedCidsState);
+  useEffect(() => {
+    client.newCidNotify((cid: Cid) => setNewCIDS((list) => [...list, cid]));
+  }, [client, setNewCIDS]);
+
+  console.log(cidList);
+  return null;
+};
 
 interface Deal {
   id: string;
@@ -226,6 +242,7 @@ const Home = () => {
             List of storage deals between peers you are connected with
           </Text>
         </Space>
+        <SuggestedCIDsSubscription />
       </VStack>
       <DealDetails />
     </DealsTable>

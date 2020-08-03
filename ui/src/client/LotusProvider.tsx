@@ -48,6 +48,9 @@ export const createClient = (config: ClientConfig): any =>
       schema: {
         methods: {
           AddGet: {},
+          NewCidNotify: {
+            subscription: true,
+          },
         },
       },
       tag: 'MyelRetrieval',
