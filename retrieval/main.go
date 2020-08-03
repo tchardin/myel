@@ -29,10 +29,29 @@ import (
 const HandshakeTopic = "/myel/handshake/1.0.0"
 
 func main() {
-	if err := run(); err != nil {
+	if err := serveRPC(); err != nil {
 		log.Fatal().Err(err).Msg("Received err from run func, exiting...")
 	}
 }
+
+type RetrievalServerHandler struct {
+	n int
+}
+
+func (h *RetrievalServerHandler) AddGet(in int) int {
+	h.n += in
+	return h.n
+}
+
+func serveRPC() error {
+	serverHandler := &RetrievalServerHandler{}
+	rpcServer := jsonrpc.NewServer()
+	rpcServer.Register("RetrievalServerHandler", serverHandler)
+
+	http.Handle("/rpc/v0", rpcServer)
+	return http.ListenAndServe(":4321", nil)
+}
+
 func run() error {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	ctx := context.Background()

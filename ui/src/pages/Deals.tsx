@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useLayoutEffect, useMemo, Suspense} from 'react';
+import {useMemo, Suspense} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   useRecoilValue,
@@ -13,7 +13,7 @@ import {
 import format from 'date-fns/format';
 import {
   signedInState,
-  lotusClient,
+  rpcClient,
   epochToDate,
   formatPieceSize,
 } from '../client';
@@ -62,7 +62,7 @@ const selectedDealState = atom<Deal | null>({
 const marketDealsQuery = selector({
   key: 'MarketDeals',
   get: async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const deals: {[key: string]: any} = await client.stateMarketDeals([]);
     const activeDeals = Object.entries(deals).reduce<Deal[]>(
       (active, [key, deal]) => {
@@ -103,7 +103,7 @@ type MinerInfo = {
 const minerInfoQuery = selectorFamily({
   key: 'MinerInfo',
   get: (miner: string) => async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const minerInfo = await client.stateMinerInfo(miner, []);
     return minerInfo;
   },
@@ -112,7 +112,7 @@ const minerInfoQuery = selectorFamily({
 const peerConnectedQuery = selectorFamily({
   key: 'PeerConnected',
   get: (miner: string) => async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const minerInfo = get(minerInfoQuery(miner));
     const connected = await client.netConnectedness(minerInfo.PeerId);
     return connected;
@@ -164,7 +164,7 @@ const DealsTable: React.FC = ({children}) => {
 const retrievalOffersQuery = selectorFamily({
   key: 'RetrievalOffers',
   get: ({cid, miner}: RetrievalOffersProps) => async ({get}) => {
-    const client = get(lotusClient);
+    const client = get(rpcClient);
     const dealInfo = await client.clientMinerQueryOffer(cid, miner);
     return dealInfo;
   },
@@ -214,11 +214,9 @@ const DealDetails = () => {
 const Home = () => {
   const navigate = useNavigate();
   const signedIn = useRecoilValue(signedInState);
-  useLayoutEffect(() => {
-    if (!signedIn) {
-      navigate('/auth');
-    }
-  }, [navigate, signedIn]);
+  if (!signedIn) {
+    navigate('auth');
+  }
   return (
     <DealsTable>
       <VStack mt={7} mb={3}>

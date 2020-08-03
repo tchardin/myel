@@ -5,25 +5,24 @@ import {
   useRecoilValue,
   RecoilRootProps,
 } from 'recoil';
-import {lotusClient, createLotus, LotusConfig} from './LotusProvider';
+import {rpcClient, createClient, ClientConfig} from './LotusProvider';
 
-const STORAGE_KEY = '@Client';
-
-interface AuthParams extends LotusConfig {}
+const STORAGE_KEY = '@Myel';
 
 export const signedInState = selector<boolean>({
   key: 'SignedIn',
-  get: ({get}) => !!get(lotusClient),
+  get: ({get}) => !!get(rpcClient),
 });
 
 export const useAuth = () => {
   const signedIn = useRecoilValue(signedInState);
-  const setLotus = useSetRecoilState(lotusClient);
+  const setClient = useSetRecoilState(rpcClient);
   const signIn = useCallback(
-    ({url, token}: AuthParams) => {
-      setLotus(createLotus(url, token));
+    (params: ClientConfig) => {
+      setClient(createClient(params));
+      localStorage.setItem(`${STORAGE_KEY}:config`, JSON.stringify(params));
     },
-    [setLotus]
+    [setClient]
   );
 
   return {
@@ -33,9 +32,8 @@ export const useAuth = () => {
 };
 
 export const initializeState: RecoilRootProps['initializeState'] = ({set}) => {
-  const lotusUrl = localStorage.getItem(`${STORAGE_KEY}:lotusUrl`);
-  const lotusToken = localStorage.getItem(`${STORAGE_KEY}:lotusToken`);
-  if (lotusUrl && lotusToken) {
-    set(lotusClient, createLotus(lotusUrl, lotusToken));
+  const config = localStorage.getItem(`${STORAGE_KEY}:config`);
+  if (config) {
+    set(rpcClient, createClient(JSON.parse(config)));
   }
 };

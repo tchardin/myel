@@ -2,7 +2,8 @@ import * as React from 'react';
 import {useCallback, useMemo, useEffect} from 'react';
 import {Form, Field} from 'react-final-form';
 import {useNavigate} from 'react-router-dom';
-import {useAuth} from '../client';
+import {useRecoilValue} from 'recoil';
+import {useAuth, rpcClient} from '../client';
 
 import Main from '../components/Main';
 import Scroll from '../components/Scroll';
@@ -16,9 +17,12 @@ import Button from '../components/Button';
 const Auth = () => {
   const navigate = useNavigate();
   const {signedIn, signIn} = useAuth();
+  const client = useRecoilValue(rpcClient);
   const initialValues = useMemo(
     () => ({
-      url: 'ws://localhost:1234/rpc/v0',
+      fullNodeUrl: 'ws://localhost:1234/rpc/v0',
+      storageNodeUrl: 'ws://localhost:2345/rpc/v0',
+      myelUrl: 'ws://localhost:4321/rpc/v0',
       token: process.env.REACT_APP_LOTUS_TOKEN,
     }),
     []
@@ -29,11 +33,12 @@ const Auth = () => {
     },
     [signIn]
   );
+
   useEffect(() => {
     if (signedIn) {
       navigate('/');
     }
-  }, [navigate, signedIn]);
+  }, [client, navigate, signedIn]);
   return (
     <Form onSubmit={submit} initialValues={initialValues}>
       {({handleSubmit}) => (
@@ -41,12 +46,24 @@ const Auth = () => {
           <Main>
             <Bounds>
               <Space scale={7}>
-                <Text is="h1">Let's connect to your Lotus node</Text>
+                <Text is="h1">Let's connect to your node</Text>
                 <Space scale={5}>
                   <Field
-                    name="url"
+                    name="fullNodeUrl"
                     component={TextField}
-                    label="Endpoint"
+                    label="Lotus node"
+                    fullWidth
+                  />
+                  <Field
+                    name="storageNodeUrl"
+                    component={TextField}
+                    label="Lotus storage miner"
+                    fullWidth
+                  />
+                  <Field
+                    name="myelUrl"
+                    component={TextField}
+                    label="Myelf retrieval client"
                     fullWidth
                   />
                   <Field
