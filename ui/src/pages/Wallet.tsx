@@ -1,11 +1,19 @@
 import * as React from 'react';
-import {Suspense} from 'react';
-import {selector, useRecoilValue} from 'recoil';
+import {Suspense, useEffect, useCallback} from 'react';
+import {
+  selector,
+  useRecoilValue,
+  useRecoilState,
+  useSetRecoilState,
+} from 'recoil';
 import {rpcClient} from '../client';
 import {FilecoinNumber} from '../utils/FilecoinNumber';
 import Text from '../components/Text';
 import Space from '../components/Space';
 import {VStack} from '../components/Stack';
+import Button from '../components/Button';
+import {connectedFaucetState, suggestedCidsState} from '../recoil/shared';
+import {Cid} from '../sharedTypes';
 
 const userIDQuery = selector<string>({
   key: 'CurrentUserID',
@@ -81,6 +89,39 @@ const NodeStatus = () => {
   );
 };
 
+const connectedFaucetQuery = selector({
+  key: 'ConnectedFaucets',
+  get: async ({get}) => {
+    const client = get(rpcClient);
+    const peers = await client.connectedFaucets();
+    return peers;
+  },
+});
+
+const ConnectedFaucets = () => {
+  const client = useRecoilValue(rpcClient);
+  const setNewCids = useSetRecoilState(suggestedCidsState);
+  const faucets = useRecoilValue(connectedFaucetQuery);
+  const start = useCallback(() => {
+    client.queryFaucet((cid: Cid) => setNewCids((cids) => [...cids, cid]));
+  }, [client, setNewCids]);
+
+  console.log(faucets);
+
+  return (
+    <>
+      {faucets.map((f: any, i: number) => (
+        <VStack p={4}>
+          <Space scale={2}>
+            <Text is="body">New faucet detected</Text>
+          </Space>
+          <Button onPress={start}>Start</Button>
+        </VStack>
+      ))}
+    </>
+  );
+};
+
 const Wallet = () => {
   return (
     <Space scale={3}>
@@ -92,6 +133,9 @@ const Wallet = () => {
       </Suspense>
       <Suspense fallback={null}>
         <Balance />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ConnectedFaucets />
       </Suspense>
     </Space>
   );

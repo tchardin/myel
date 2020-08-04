@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/ipfs/go-cid"
@@ -68,28 +69,27 @@ func run() error {
 		return err
 	}
 	donec := make(chan struct{}, 1)
-	newCids := make(chan *cid.Cid)
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
 	v := &Valve{
 		Self:    h.ID(),
 		Dict:    make(map[string]cid.Cid),
-		Updates: newCids,
+		Updates: make(chan *cid.Cid),
 		hs:      hs,
 		fcw:     fcw,
 		ps:      ps,
 		ctx:     ctx,
 		disc:    disc,
 	}
-	go serveRPC(v)
-	go v.Open()
-
-	stop := make(chan os.Signal, 1)
+	go serveRPC(v, donec)
 
 	select {
 	case <-stop:
+		log.Info().Msg("Shutting down")
+		close(donec)
 		h.Close()
 		os.Exit(0)
-	case <-donec:
-		h.Close()
 	}
 	return nil
 }
@@ -98,20 +98,19 @@ func run() error {
 // Expose RPC methods to UI
 
 type RetrievalServerHandler struct {
-	n int
 	v *Valve
 }
 
-func (h *RetrievalServerHandler) AddGet(in int) int {
-	h.n += in
-	return h.n
-}
-
-func (h *RetrievalServerHandler) NewCidNotify() <-chan *cid.Cid {
+func (h *RetrievalServerHandler) QueryFaucet() <-chan *cid.Cid {
+	go h.v.Open()
 	return h.v.Updates
 }
 
-func serveRPC(v *Valve) error {
+func (h *RetrievalServerHandler) ConnectedFaucets() []peer.ID {
+	return h.v.ps.ListPeers(HandshakeTopic)
+}
+
+func serveRPC(v *Valve, shutdownCh <-chan struct{}) error {
 	serverHandler := &RetrievalServerHandler{
 		v: v,
 	}
@@ -120,7 +119,23 @@ func serveRPC(v *Valve) error {
 
 	http.Handle("/rpc/v0", rpcServer)
 	log.Info().Str("port", RPCPort).Msg("Starting RPC")
-	return http.ListenAndServe(RPCPort, nil)
+
+	srv := &http.Server{
+		Addr:    RPCPort,
+		Handler: http.DefaultServeMux,
+	}
+
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	<-shutdownCh
+	if err := srv.Shutdown(context.TODO()); err != nil {
+		log.Error().Err(err).Msg("Shutting down RPC server failed")
+		return err
+	}
+	log.Info().Msg("Server exited properly")
+	return nil
 }
 
 // ==================================================================================
@@ -144,10 +159,6 @@ type Valve struct {
 }
 
 func (v *Valve) Open() error {
-	// block execution until we find the faucet we expect a single peer at this point
-	peer := <-v.disc.ConnectedPeers
-	log.Info().Str("peerID", peer.ID.Pretty()).Msg("Added new peer to channel")
-
 	id, err := v.fcw.CurrentUserID()
 	if err != nil {
 		return err
@@ -157,13 +168,14 @@ func (v *Valve) Open() error {
 	if err != nil {
 		return err
 	}
-	topic := fmt.Sprintln("/myel/faucet/", id, "/1.0.0")
+	topic := fmt.Sprint("/myel/faucet/", id, "/1.0.0")
 	c, err := NewChannel(v.ctx, topic, v.ps, v.Self)
 	if err != nil {
 		return err
 	}
-	m := <-c.Messages
-	go v.HandlePiece(m.Payload)
+	for m := range c.Messages {
+		go v.HandlePiece(m.Payload)
+	}
 	return nil
 }
 
