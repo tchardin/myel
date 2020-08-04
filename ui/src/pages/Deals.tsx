@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {useMemo, Suspense} from 'react';
-import {useNavigate} from 'react-router-dom';
 import {
   useRecoilValue,
   selector,
@@ -11,19 +10,13 @@ import {
   useRecoilState,
 } from 'recoil';
 import format from 'date-fns/format';
-import {
-  signedInState,
-  rpcClient,
-  epochToDate,
-  formatPieceSize,
-} from '../client';
+import {rpcClient, epochToDate, formatPieceSize} from '../client';
 import Text from '../components/Text';
 import Table from '../components/Table';
 import Space from '../components/Space';
 import {PageSheet} from '../components/Sheets';
 import {VStack} from '../components/Stack';
 import {Cid} from '../sharedTypes';
-import {suggestedCidsState} from '../recoil/shared';
 
 /*
 const peersQuery = selector({
@@ -41,12 +34,6 @@ const PeersList = () => {
   return null;
 };
  */
-
-const SuggestedCIDs = () => {
-  const cidList = useRecoilValue(suggestedCidsState);
-  console.log(cidList);
-  return null;
-};
 
 interface Deal {
   id: string;
@@ -218,12 +205,7 @@ const DealDetails = () => {
   );
 };
 
-const Home = () => {
-  const navigate = useNavigate();
-  const signedIn = useRecoilValue(signedInState);
-  if (!signedIn) {
-    navigate('auth');
-  }
+const Deals = () => {
   return (
     <DealsTable>
       <VStack mt={7} mb={3}>
@@ -233,11 +215,10 @@ const Home = () => {
             List of storage deals between peers you are connected with
           </Text>
         </Space>
-        <SuggestedCIDs />
       </VStack>
       <DealDetails />
     </DealsTable>
   );
 };
 
-export default Home;
+export default Deals;

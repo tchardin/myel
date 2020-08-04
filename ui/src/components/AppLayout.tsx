@@ -1,10 +1,13 @@
 import * as React from 'react';
 import {useRef, useMemo} from 'react';
 import {View, StyleSheet, Animated, PanResponder} from 'react-native';
+import {useNavigate} from 'react-router-dom';
+import {useRecoilValue} from 'recoil';
 
 import {useTheme} from '../theme';
 import {useBreakpoint} from '../hooks/useBreakpoint';
 import Toolbar from '../components/Toolbar';
+import {signedInState} from '../client';
 
 const STORAGE_KEY = '@UI:PaneSize';
 
@@ -39,6 +42,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({master, detail}) => {
       }),
     [w]
   );
+  const navigate = useNavigate();
+  const signedIn = useRecoilValue(signedInState);
+  if (!signedIn) {
+    navigate('auth');
+  }
   return (
     <View
       style={[
