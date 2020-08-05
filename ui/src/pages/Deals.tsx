@@ -1,6 +1,5 @@
 import * as React from 'react';
-import {useMemo, useEffect, Suspense} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useMemo, Suspense} from 'react';
 import {
   useRecoilValue,
   selector,
@@ -11,12 +10,7 @@ import {
   useRecoilState,
 } from 'recoil';
 import format from 'date-fns/format';
-import {
-  signedInState,
-  rpcClient,
-  epochToDate,
-  formatPieceSize,
-} from '../client';
+import {rpcClient, epochToDate, formatPieceSize} from '../client';
 import Text from '../components/Text';
 import Table from '../components/Table';
 import Space from '../components/Space';
@@ -40,22 +34,6 @@ const PeersList = () => {
   return null;
 };
  */
-
-const suggestedCidsState = atom<Cid[]>({
-  key: 'SuggestedCIDs',
-  default: [],
-});
-
-const SuggestedCIDsSubscription = () => {
-  const client = useRecoilValue(rpcClient);
-  const [cidList, setNewCIDS] = useRecoilState(suggestedCidsState);
-  useEffect(() => {
-    client.newCidNotify((cid: Cid) => setNewCIDS((list) => [...list, cid]));
-  }, [client, setNewCIDS]);
-
-  console.log(cidList);
-  return null;
-};
 
 interface Deal {
   id: string;
@@ -227,12 +205,7 @@ const DealDetails = () => {
   );
 };
 
-const Home = () => {
-  const navigate = useNavigate();
-  const signedIn = useRecoilValue(signedInState);
-  if (!signedIn) {
-    navigate('auth');
-  }
+const Deals = () => {
   return (
     <DealsTable>
       <VStack mt={7} mb={3}>
@@ -242,11 +215,10 @@ const Home = () => {
             List of storage deals between peers you are connected with
           </Text>
         </Space>
-        <SuggestedCIDsSubscription />
       </VStack>
       <DealDetails />
     </DealsTable>
   );
 };
 
-export default Home;
+export default Deals;

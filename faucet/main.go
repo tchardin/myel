@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -15,6 +17,10 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/p2p/discovery"
+	"github.com/multiformats/go-multiaddr"
+
+	"github.com/oschwald/maxminddb-golang"
+	"github.com/textileio/powergate/util"
 )
 
 const HandshakeTopic = "/myel/handshake/1.0.0"
@@ -57,25 +63,33 @@ func run() error {
 		return fmt.Errorf("Unable to setup local mDNS discovery: %s", err)
 	}
 
-	donec := make(chan struct{}, 1)
+	// setup ip location db
+	geo, err := NewGeoIp("GeoLite2-City.mmdb")
+	if err != nil {
+		return fmt.Errorf("Unable to find geoip2 database: %s", err)
+	}
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
 
 	spk := &Sprinkler{
 		Pending: make(chan *Target),
+		Topics:  make(map[string]*Channel),
 		Self:    selfID,
 		ctx:     ctx,
 		ps:      ps,
+		h:       h,
+		geo:     geo,
 	}
 	go spk.LoadTargets(hs)
 	go spk.Start()
 
-	stop := make(chan os.Signal, 1)
-
 	select {
 	case <-stop:
+		log.Info().Msg("Shutting down")
 		h.Close()
+		geo.db.Close()
 		os.Exit(0)
-	case <-donec:
-		h.Close()
 	}
 
 	return nil
@@ -92,25 +106,50 @@ type Target struct {
 type Sprinkler struct {
 	Pending chan *Target
 	Self    peer.ID
+	Topics  map[string]*Channel
 
 	ctx context.Context
 	ps  *pubsub.PubSub
+	h   host.Host
+	geo *GeoIp
 }
 
 func (s *Sprinkler) Start() {
 	for t := range s.Pending {
-		go s.StartChannel(t)
+		if c, ok := s.Topics[topicName(t.MinerID)]; ok {
+			c.Publish(ExampleCid)
+		} else {
+			go s.StartChannel(t)
+		}
 	}
 }
 
 func (s *Sprinkler) StartChannel(t *Target) error {
-	topic := fmt.Sprintln("/myel/faucet/", t.MinerID, "/1.0.0")
+	topic := topicName(t.MinerID)
 	c, err := NewChannel(s.ctx, topic, s.ps, s.Self)
-
 	if err != nil {
 		log.Error().Err(err).Str("topic", topic).Msg("Failed to start new pubsub channel")
 		return fmt.Errorf("Failed to start new pubsub channel")
 	}
+	log.Info().Str("topic", topic).Msg("Listening to topic")
+	// keep track of opened channels in case we get another request
+	s.Topics[topic] = c
+	// convert string to peer .ID
+	pID, err := peer.IDB58Decode(t.PeerID)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to convert peer ID")
+		return fmt.Errorf("Failed to convert peer ID: %s", err)
+	}
+	// Get peer addr info
+	pInfo := s.h.Peerstore().PeerInfo(pID)
+	log.Info().Str("pInfo", pInfo.String()).Msg("Extracted peer address")
+	loc, err := s.geo.Resolve(pInfo.Addrs)
+	if err != nil {
+		// we should still handle peer if we can't resolve their location
+		// though we should prob warn them the results won't be as good
+	}
+	log.Info().Str("country", loc.Country).Msg("resolved peer location")
+
 	c.Publish(ExampleCid)
 	return nil
 }
@@ -124,6 +163,10 @@ func (s *Sprinkler) LoadTargets(c *Channel) {
 			PeerID:  m.SenderID,
 		}
 	}
+}
+
+func topicName(name string) string {
+	return fmt.Sprint("/myel/faucet/", name, "/1.0.0")
 }
 
 // ==================================================================
@@ -236,4 +279,65 @@ func (c *Channel) Publish(msg string) error {
 		return err
 	}
 	return c.topic.Publish(c.ctx, msgBytes)
+}
+
+// ===============================================================================
+// Resolving peer location from their ip addresses
+
+type GeoIp struct {
+	db *maxminddb.Reader
+}
+
+type IpLocation struct {
+	Country string
+	Lat     float64
+	Lon     float64
+}
+
+func NewGeoIp(path string) (*GeoIp, error) {
+	db, err := maxminddb.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return &GeoIp{db: db}, nil
+}
+
+func (geo *GeoIp) Resolve(multiaddrs []multiaddr.Multiaddr) (IpLocation, error) {
+	for _, addr := range multiaddrs {
+		ipport, err := util.TCPAddrFromMultiAddr(addr)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to transform multiddr to tcp addr")
+			continue
+		}
+		strIP, _, err := net.SplitHostPort(ipport)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to parse ip/port")
+			continue
+		}
+		ip := net.ParseIP(strIP)
+		var city struct {
+			Country struct {
+				ISOCode string `maxminddb:"iso_code"`
+			} `maxminddb:"country"`
+			Location struct {
+				Latitude  float64 `maxminddb:"latitude"`
+				Longitude float64 `maxminddb:"longitude"`
+			} `maxminddb:"location"`
+		}
+		err = geo.db.Lookup(ip, &city)
+		if err != nil {
+			log.Error().Err(err).Str("ip", strIP).Msg("Failed to find ip in geoip2")
+			continue
+		}
+		fmt.Printf("%+v\n", city)
+		if city.Country.ISOCode != "" || (city.Location.Latitude != 0 && city.Location.Longitude != 0) {
+			return IpLocation{
+				Country: city.Country.ISOCode,
+				Lat:     city.Location.Latitude,
+				Lon:     city.Location.Longitude,
+			}, nil
+		}
+		log.Info().Str("ip", ip.String()).Msg("No info for addr")
+	}
+	return IpLocation{}, fmt.Errorf("Cannot resolve multiaddr location")
 }

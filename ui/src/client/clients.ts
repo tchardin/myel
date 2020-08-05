@@ -43,30 +43,30 @@ export const createClient = (config: ClientConfig): any =>
     myel: {
       provider: new BrowserProvider(config.myelUrl, {
         token: config.token,
+        tag: 'MyelRetrieval',
       }),
       schema: {
         methods: {
-          AddGet: {},
-          NewCidNotify: {
+          ConnectedFaucets: {},
+          QueryFaucet: {
             subscription: true,
           },
         },
       },
-      tag: 'MyelRetrieval',
     },
     lotusFullNode: {
       provider: new BrowserProvider(config.fullNodeUrl, {
         token: config.token,
+        tag: 'Filecoin',
       }),
       schema: testnet.fullNode,
-      tag: 'Filecoin',
     },
     lotusStorageMiner: {
       provider: new BrowserProvider(config.storageNodeUrl, {
         token: config.token,
+        tag: 'Filecoin',
       }),
       schema: testnet.storageMiner,
-      tag: 'Filecoin',
     },
   });
 

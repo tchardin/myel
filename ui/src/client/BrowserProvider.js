@@ -12,6 +12,7 @@ class BrowserProvider {
       this.httpUrl.replace(/\/rpc\//, '/rest/') + '/import';
     this.transport = options.transport || (url.match(/^http/) ? 'http' : 'ws');
     this.id = 0;
+    this.tag = options.tag;
     this.inflight = new Map();
     this.cancelled = new Map();
     this.subscriptions = new Map();

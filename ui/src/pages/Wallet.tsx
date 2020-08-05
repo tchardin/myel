@@ -1,11 +1,15 @@
 import * as React from 'react';
-import {Suspense} from 'react';
-import {selector, useRecoilValue} from 'recoil';
+import {Suspense, useCallback} from 'react';
+import {selector, useRecoilValue, useSetRecoilState} from 'recoil';
 import {rpcClient} from '../client';
 import {FilecoinNumber} from '../utils/FilecoinNumber';
 import Text from '../components/Text';
 import Space from '../components/Space';
 import {VStack} from '../components/Stack';
+import Button from '../components/Button';
+import {suggestedCidsState} from '../recoil/shared';
+import {Cid} from '../sharedTypes';
+import ErrorBoundary from '../utils/ErrorBoundary';
 
 const userIDQuery = selector<string>({
   key: 'CurrentUserID',
@@ -16,13 +20,19 @@ const userIDQuery = selector<string>({
     return userID;
   },
 });
-const Title = () => {
-  const userID = useRecoilValue(userIDQuery);
+type TitleProps = {
+  name?: string;
+};
+const Title = ({name}: TitleProps) => {
   return (
     <VStack mt={7}>
-      <Text is="h2">Welcome, {userID}</Text>
+      <Text is="h2">{name ? `Welcome, ${name}` : `Welcome`}</Text>
     </VStack>
   );
+};
+const UserTitle = () => {
+  const userID = useRecoilValue(userIDQuery);
+  return <Title name={userID} />;
 };
 
 const walletBalanceQuery = selector<string>({
@@ -81,18 +91,67 @@ const NodeStatus = () => {
   );
 };
 
+const connectedFaucetQuery = selector({
+  key: 'ConnectedFaucets',
+  get: async ({get}) => {
+    const client = get(rpcClient);
+    const peers = await client.connectedFaucets();
+    return peers;
+  },
+});
+
+const ConnectedFaucets = () => {
+  const client = useRecoilValue(rpcClient);
+  const setNewCids = useSetRecoilState(suggestedCidsState);
+  const faucets = useRecoilValue(connectedFaucetQuery);
+  const start = useCallback(() => {
+    client.queryFaucet((cid: Cid) => setNewCids((cids) => [...cids, cid]));
+  }, [client, setNewCids]);
+
+  console.log(faucets);
+
+  return (
+    <>
+      {faucets.map((f: any, i: number) => (
+        <VStack p={4}>
+          <Space scale={4}>
+            <Text is="body">New faucet detected</Text>
+          </Space>
+          <Button onPress={start}>Start</Button>
+        </VStack>
+      ))}
+    </>
+  );
+};
+const FaucetError = () => {
+  return (
+    <VStack>
+      <Text is="body">
+        Error connecting to the faucet make sure you are running a Myel client
+      </Text>
+    </VStack>
+  );
+};
+
 const Wallet = () => {
   return (
     <Space scale={3}>
-      <Suspense fallback={null}>
-        <Title />
-      </Suspense>
+      <ErrorBoundary fallback={<Title />}>
+        <Suspense fallback={null}>
+          <UserTitle />
+        </Suspense>
+      </ErrorBoundary>
       <Suspense fallback={null}>
         <NodeStatus />
       </Suspense>
       <Suspense fallback={null}>
         <Balance />
       </Suspense>
+      <ErrorBoundary fallback={<FaucetError />}>
+        <Suspense fallback={null}>
+          <ConnectedFaucets />
+        </Suspense>
+      </ErrorBoundary>
     </Space>
   );
 };
