@@ -12,14 +12,12 @@ import (
 	"path"
 	"time"
 
-	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-fil-markets/storagemarket"
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/types"
-	tstats "github.com/filecoin-project/lotus/tools/stats"
 	"github.com/filecoin-project/specs-actors/actors/abi"
 	"github.com/filecoin-project/specs-actors/actors/abi/big"
 	"github.com/ipfs/go-cid"
@@ -51,19 +49,19 @@ func runTestScenario() error {
 	}
 	client, closer, err := createFullNode(authToken, "1234")
 	defer closer()
-	// if err != nil {
-	// 	return err
-	// }
-	// minerInfo, err := GetRandMinerInfo(ctx, client)
-	// if err != nil {
-	// 	return err
-	// }
+	if err != nil {
+		return err
+	}
+	ask, mInfo, err := GetRandMinerAsk(ctx, client)
+	if err != nil {
+		return err
+	}
 	// err = initPaymentChannel(ctx, client, minerInfo)
 	// if err != nil {
 	// 	return err
 	// }
 
-	// time.Sleep(12 * time.Second)
+	time.Sleep(12 * time.Second)
 	home, err := os.Getwd()
 	if err != nil {
 		return err
@@ -92,16 +90,16 @@ func runTestScenario() error {
 	}
 	log.Info().Str("fcid", fileCid.String()).Msg("Imported file")
 
-	// deal, err := StartDeal(ctx, client, minerInfo.Owner, fcid.Root)
-	// if err != nil {
-	// 	return err
-	// }
-	// time.Sleep(2 * time.Second)
+	deal, err := StartDeal(ctx, client, ask, mInfo, fileCid)
+	if err != nil {
+		return err
+	}
+	time.Sleep(2 * time.Second)
 
-	// err = WaitDealSealed(ctx, client, deal)
-	// if err != nil {
-	// 	return err
-	// }
+	err = WaitDealSealed(ctx, client, deal)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -124,14 +122,14 @@ func createFullNode(token *string, port string) (api.FullNode, jsonrpc.ClientClo
 }
 
 // Get the first miner we can connect to
-func GetRandMinerInfo(ctx context.Context, c api.FullNode) (api.MinerInfo, error) {
+func GetRandMinerAsk(ctx context.Context, c api.FullNode) (*storagemarket.StorageAsk, api.MinerInfo, error) {
 	miners, err := c.StateListMiners(ctx, types.EmptyTSK)
 	if err != nil {
-		return api.MinerInfo{}, fmt.Errorf("Unable to retrieve miners: %s", err)
+		return nil, api.MinerInfo{}, fmt.Errorf("Unable to retrieve miners: %s", err)
 	}
 	peers, err := c.NetPeers(ctx)
 	if err != nil {
-		return api.MinerInfo{}, fmt.Errorf("Unable to list peers on the network: %s", err)
+		return nil, api.MinerInfo{}, fmt.Errorf("Unable to list peers on the network: %s", err)
 	}
 	// create a lookup table for our peers
 	plook := make(map[peer.ID]peer.AddrInfo)
@@ -145,18 +143,26 @@ func GetRandMinerInfo(ctx context.Context, c api.FullNode) (api.MinerInfo, error
 			log.Info().Err(err).Str("address", miner.String()).Msg("Unable to retrieve miner info")
 			continue
 		}
-		if p, ok := plook[peer.ID(minerInfo.PeerId)]; ok {
+		pid := peer.ID(minerInfo.PeerId)
+		if p, ok := plook[pid]; ok {
 			if err := c.NetConnect(ctx, p); err != nil {
 				log.Info().Err(err).Msg("Failed to connect to miner")
 				continue
 			}
 			log.Info().Str("miner", miner.String()).Msg("Connected with a miner")
-			return minerInfo, nil
+			// Miner ask doesn't seem to work on testnet so we just fallback to the miner info
+			sa, err := c.ClientQueryAsk(ctx, pid, minerInfo.Owner)
+			if err != nil {
+				log.Info().Err(err).Str("miner", miner.String()).Msg("Failed to get storage ask from miner")
+				return nil, minerInfo, nil
+			}
+
+			return sa.Ask, minerInfo, nil
 		}
 		continue
 	}
 
-	return api.MinerInfo{}, fmt.Errorf("Unable to connect to any miner")
+	return nil, api.MinerInfo{}, fmt.Errorf("Unable to connect to any miner")
 }
 
 // filToAttoFil converts a fractional filecoin value into AttoFIL, rounding if necessary
@@ -172,11 +178,11 @@ func initPaymentChannel(ctx context.Context, cl api.FullNode, miner api.MinerInf
 	log.Info().Msg("Creating payment channel")
 	clAddr, err := cl.WalletDefaultAddress(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to retrieve default address: %s")
+		return fmt.Errorf("Unable to retrieve default address: %s", err)
 	}
 	channel, err := cl.PaychGet(ctx, clAddr, miner.Owner, balance)
 	if err != nil {
-		return fmt.Errorf("Unable to create payment channel: %s")
+		return fmt.Errorf("Unable to create payment channel: %s", err)
 	}
 	// wait for channel creation message to appear on chain
 	_, err = cl.StateWaitMsg(ctx, channel.ChannelMessage, 2)
@@ -193,10 +199,16 @@ func initPaymentChannel(ctx context.Context, cl api.FullNode, miner api.MinerInf
 	return nil
 }
 
-func StartDeal(ctx context.Context, cl api.FullNode, minerAddr address.Address, fcid cid.Cid) (*cid.Cid, error) {
+func StartDeal(ctx context.Context, cl api.FullNode, ask *storagemarket.StorageAsk, mInfo api.MinerInfo, fcid cid.Cid) (*cid.Cid, error) {
 	clAddr, err := cl.WalletDefaultAddress(ctx)
 	if err != nil {
 		return nil, err
+	}
+	var price types.BigInt
+	if ask != nil {
+		price = ask.Price
+	} else {
+		price = types.NewInt(1000)
 	}
 	deal, err := cl.ClientStartDeal(ctx, &api.StartDealParams{
 		Data: &storagemarket.DataRef{
@@ -204,10 +216,10 @@ func StartDeal(ctx context.Context, cl api.FullNode, minerAddr address.Address, 
 			Root:         fcid,
 		},
 		Wallet:            clAddr,
-		Miner:             minerAddr,
-		EpochPrice:        types.NewInt(1000),
+		Miner:             mInfo.Owner,
+		EpochPrice:        price,
 		MinBlocksDuration: 640000,
-		FastRetrieval:     true,
+		// FastRetrieval:     true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to start deal: %s", err)
@@ -222,7 +234,7 @@ func WaitDealSealed(ctx context.Context, cl api.FullNode, deal *cid.Cid) error {
 	cctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	tipsetsCh, err := tstats.GetTips(cctx, cl, abi.ChainEpoch(height), headlag)
+	tipsetsCh, err := GetTips(cctx, cl, abi.ChainEpoch(height), headlag)
 	if err != nil {
 		return err
 	}
