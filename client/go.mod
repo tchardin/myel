@@ -3,7 +3,6 @@ module github.com/tchardin/hackfs/client
 go 1.14
 
 require (
-	github.com/filecoin-project/go-address v0.0.2-0.20200504173055-8b6f2fb2b3ef
 	github.com/filecoin-project/go-fil-markets v0.3.2-0.20200706104419-7c180fe156d4
 	github.com/filecoin-project/go-jsonrpc v0.1.1
 	github.com/filecoin-project/lotus v0.4.2-0.20200706172415-cf6ac44b6ec5
