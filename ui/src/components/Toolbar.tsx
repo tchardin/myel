@@ -50,7 +50,7 @@ const Toolbar = () => {
       <Item path="/peers">
         <Peers color="text" />
       </Item>
-      <Item path="/adjust">
+      <Item path="/settings">
         <Adjust color="text" />
       </Item>
     </View>

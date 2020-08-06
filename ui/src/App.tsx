@@ -9,6 +9,8 @@ const Auth = lazy(() => import('./pages/Auth'));
 const Deals = lazy(() => import('./pages/Deals'));
 const Wallet = lazy(() => import('./pages/Wallet'));
 const Peers = lazy(() => import('./pages/Peers'));
+const Pieces = lazy(() => import('./pages/Pieces'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 const App = () => {
   return (
@@ -32,8 +34,14 @@ const App = () => {
                       <Route path="/">
                         <Deals />
                       </Route>
+                      <Route path="pieces">
+                        <Pieces />
+                      </Route>
                       <Route path="peers">
                         <Peers />
+                      </Route>
+                      <Route path="settings">
+                        <Settings />
                       </Route>
                     </Routes>
                   </Suspense>

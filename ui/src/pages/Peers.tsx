@@ -6,6 +6,7 @@ import {rpcClient} from '../client';
 import PageTitle from '../components/PageTitle';
 import ErrorBoundary from '../utils/ErrorBoundary';
 import PageFallback from '../components/PageFallback';
+import {shortID} from '../utils/format';
 
 type Addresses = string[];
 type PeerInfo = {
@@ -44,10 +45,6 @@ const peersQuery = selector<PeerInfo[]>({
     }));
   },
 });
-
-const shortID = (p: string): string => {
-  return p.slice(-8);
-};
 
 const PeersTable: React.FC = ({children}) => {
   const data = useRecoilValue(peersQuery);
