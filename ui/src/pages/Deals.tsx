@@ -11,29 +11,15 @@ import {
 } from 'recoil';
 import format from 'date-fns/format';
 import {rpcClient, epochToDate, formatPieceSize} from '../client';
+import PageTitle from '../components/PageTitle';
 import Text from '../components/Text';
 import Table from '../components/Table';
 import Space from '../components/Space';
 import {PageSheet} from '../components/Sheets';
 import {VStack} from '../components/Stack';
 import {Cid} from '../sharedTypes';
-
-/*
-const peersQuery = selector({
-  key: 'NetPeers',
-  get: async ({get}) => {
-    const client = get(lotusClient);
-    const peers = await client.netPeers();
-    return peers;
-  },
-});
-
-const PeersList = () => {
-  const peers = useRecoilValue(peersQuery);
-  console.log(peers);
-  return null;
-};
- */
+import PageFallback from '../components/PageFallback';
+import ErrorBoundary from '../utils/ErrorBoundary';
 
 interface Deal {
   id: string;
@@ -207,17 +193,17 @@ const DealDetails = () => {
 
 const Deals = () => {
   return (
-    <DealsTable>
-      <VStack mt={7} mb={3}>
-        <Space scale={2}>
-          <Text is="h1">Market deals</Text>
-          <Text is="body">
-            List of storage deals between peers you are connected with
-          </Text>
-        </Space>
-      </VStack>
-      <DealDetails />
-    </DealsTable>
+    <ErrorBoundary fallback={<PageFallback />}>
+      <Suspense fallback={<PageFallback loading />}>
+        <DealsTable>
+          <PageTitle
+            title="Market deals"
+            subtitle="List of storage deals between peers you are connected with"
+          />
+          <DealDetails />
+        </DealsTable>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 

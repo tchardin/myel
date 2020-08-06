@@ -13,6 +13,7 @@ import Text from '../components/Text';
 import Space from '../components/Space';
 import {VStack} from '../components/Stack';
 import Button from '../components/Button';
+import PageTitle from '../components/PageTitle';
 import {suggestedCidsState} from '../recoil/shared';
 import {Cid} from '../sharedTypes';
 import ErrorBoundary from '../utils/ErrorBoundary';
@@ -26,19 +27,9 @@ const userIDQuery = selector<string>({
     return userID;
   },
 });
-type TitleProps = {
-  name?: string;
-};
-const Title = ({name}: TitleProps) => {
-  return (
-    <VStack mt={7}>
-      <Text is="h2">{name ? `Welcome, ${name}` : `Welcome`}</Text>
-    </VStack>
-  );
-};
 const UserTitle = () => {
   const userID = useRecoilValue(userIDQuery);
-  return <Title name={userID} />;
+  return <PageTitle title={`Welcome, ${userID}`} secondary />;
 };
 
 const walletBalanceQuery = selector<string>({
@@ -186,17 +177,24 @@ const FaucetError = () => {
 const Wallet = () => {
   return (
     <Space scale={3}>
-      <ErrorBoundary fallback={<Title />}>
-        <Suspense fallback={null}>
+      <ErrorBoundary fallback={<PageTitle title="Welcome" secondary />}>
+        <Suspense
+          fallback={
+            <PageTitle title="TODO" subtitle="TODO" secondary loading />
+          }>
           <UserTitle />
         </Suspense>
       </ErrorBoundary>
-      <Suspense fallback={null}>
-        <NodeStatus />
-      </Suspense>
-      <Suspense fallback={null}>
-        <Balance />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <NodeStatus />
+        </Suspense>
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Balance />
+        </Suspense>
+      </ErrorBoundary>
       <ErrorBoundary fallback={<FaucetError />}>
         <Suspense fallback={null}>
           <ConnectedFaucets />

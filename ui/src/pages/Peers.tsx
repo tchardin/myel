@@ -1,11 +1,11 @@
 import * as React from 'react';
 import {useMemo, Suspense, useCallback} from 'react';
 import {selector, useRecoilValue} from 'recoil';
-import Text from '../components/Text';
 import Table from '../components/Table';
-import Space from '../components/Space';
 import {rpcClient} from '../client';
-import {VStack} from '../components/Stack';
+import PageTitle from '../components/PageTitle';
+import ErrorBoundary from '../utils/ErrorBoundary';
+import PageFallback from '../components/PageFallback';
 
 type Addresses = string[];
 type PeerInfo = {
@@ -69,14 +69,16 @@ const PeersTable: React.FC = ({children}) => {
 
 const Peers = () => {
   return (
-    <PeersTable>
-      <VStack mt={7} mb={3}>
-        <Space scale={2}>
-          <Text is="h1">Network peers</Text>
-          <Text is="body">List of peers your node may be connected to</Text>
-        </Space>
-      </VStack>
-    </PeersTable>
+    <ErrorBoundary fallback={<PageFallback />}>
+      <Suspense fallback={<PageFallback loading />}>
+        <PeersTable>
+          <PageTitle
+            title="Network peers"
+            subtitle="List of peers your node may be connected to"
+          />
+        </PeersTable>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 
