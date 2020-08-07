@@ -1,4 +1,4 @@
-module github.com/tchardin/hackfs/retrieval
+module github.com/tchardin/myel/retrieval
 
 go 1.14
 
