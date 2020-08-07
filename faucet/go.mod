@@ -1,4 +1,4 @@
-module github.com/tchardin/hackfs/faucet
+module github.com/tchardin/myel/faucet
 
 go 1.14
 

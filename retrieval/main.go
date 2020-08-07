@@ -207,7 +207,7 @@ func NewFilecoinWrapper() (*FilecoinWrapper, jsonrpc.ClientCloser, error) {
 	)
 
 	if err := ff.Parse(fs, os.Args[1:],
-		ff.WithEnvVarPrefix("HACKFS_NODE"),
+		ff.WithEnvVarPrefix("MYEL_RETRIEVAL"),
 	); err != nil {
 		return nil, nil, fmt.Errorf("Unable to parse flags: %s", err)
 	}

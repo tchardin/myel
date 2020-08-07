@@ -1,4 +1,4 @@
-module github.com/tchardin/hackfs/client
+module github.com/tchardin/myel/client
 
 go 1.14
 
