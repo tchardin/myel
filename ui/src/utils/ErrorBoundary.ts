@@ -1,11 +1,19 @@
 import * as React from 'react';
 
 type ErrorBoundaryProps = {
-  fallback: React.ReactNode | null;
+  fallback?: React.ReactNode | null;
 };
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
-  state = {hasError: false, error: null};
+type ErrorBoundaryState = {
+  hasError: boolean;
+  error?: Error;
+};
+
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  state: ErrorBoundaryState = {hasError: false};
   static getDerivedStateFromError(error: Error) {
     return {
       hasError: true,
@@ -13,8 +21,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps> {
     };
   }
   render() {
+    console.log(this.state.error?.message);
     if (this.state.hasError) {
-      return this.props.fallback;
+      return this.props.fallback || null;
     }
     return this.props.children;
   }

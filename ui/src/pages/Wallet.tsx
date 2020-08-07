@@ -1,12 +1,19 @@
 import * as React from 'react';
-import {Suspense, useCallback} from 'react';
-import {selector, useRecoilValue, useSetRecoilState} from 'recoil';
+import {Suspense, useCallback, useEffect} from 'react';
+import {
+  selector,
+  useRecoilValue,
+  useSetRecoilState,
+  useRecoilState,
+  atom,
+} from 'recoil';
 import {rpcClient} from '../client';
 import {FilecoinNumber} from '../utils/FilecoinNumber';
 import Text from '../components/Text';
 import Space from '../components/Space';
 import {VStack} from '../components/Stack';
 import Button from '../components/Button';
+import PageTitle from '../components/PageTitle';
 import {suggestedCidsState} from '../recoil/shared';
 import {Cid} from '../sharedTypes';
 import ErrorBoundary from '../utils/ErrorBoundary';
@@ -20,19 +27,9 @@ const userIDQuery = selector<string>({
     return userID;
   },
 });
-type TitleProps = {
-  name?: string;
-};
-const Title = ({name}: TitleProps) => {
-  return (
-    <VStack mt={7}>
-      <Text is="h2">{name ? `Welcome, ${name}` : `Welcome`}</Text>
-    </VStack>
-  );
-};
 const UserTitle = () => {
   const userID = useRecoilValue(userIDQuery);
-  return <Title name={userID} />;
+  return <PageTitle title={`Welcome, ${userID}`} secondary />;
 };
 
 const walletBalanceQuery = selector<string>({
@@ -58,19 +55,18 @@ const Balance = () => {
 };
 
 const statusInfo = {
-  Online: 'Your node is online and running properly',
-  PendingSync: 'Your node is still catching up with the latest blocks',
-  Offline: 'Your node is down or there is a network issue',
+  Online: 'Your lotus node is online and running',
+  PendingSync: 'Your lotus node is still catching up with the latest blocks',
+  Offline: 'Your lotus node is down or there is a network issue',
 };
 type NodeStatus = 'Online' | 'PendingSync' | 'Offline';
 type NodeInfo = {
   version: string;
   apiVersion: string;
   blockDelay: string;
-  status: NodeStatus;
 };
-const statusQuery = selector({
-  key: 'NodeStatus',
+const nodeInfoQuery = selector<NodeInfo>({
+  key: 'NodeInfo',
   get: async ({get}) => {
     const client = get(rpcClient);
     const info = await client.version();
@@ -78,15 +74,62 @@ const statusQuery = selector({
       version: info.Version,
       apiVersion: info.APIVersion,
       blockDelay: info.BlockDelay,
-      status: info.BlockDelay > 0 ? 'PendingSync' : 'Online',
     };
   },
 });
+enum SyncStateStage {
+  StageIdle,
+  StageHeaders,
+  StagePersistHeaders,
+  StageMessages,
+  StageSyncComplete,
+  StageSyncErrored,
+}
+type ActiveSync = {
+  Stage: SyncStateStage;
+};
+type SyncState = {
+  ActiveSyncs: ActiveSync[];
+};
+const syncStateQuery = selector<SyncState>({
+  key: 'SyncState',
+  get: async ({get}) => {
+    const client = get(rpcClient);
+    const state = await client.syncState();
+    return state;
+  },
+});
+const syncStatusState = atom<NodeStatus>({
+  key: 'NodeStatus',
+  default: 'Offline',
+});
+const useNodeSyncStatus = () => {
+  const syncState = useRecoilValue(syncStateQuery);
+  const client = useRecoilValue(rpcClient);
+  const [status, setStatus] = useRecoilState(syncStatusState);
+  useEffect(() => {
+    if (
+      syncState.ActiveSyncs.some(
+        (as) => as.Stage !== SyncStateStage.StageSyncComplete
+      )
+    ) {
+      setStatus('PendingSync');
+      client.syncIncomingBlocks(console.log);
+    } else {
+      setStatus('Online');
+    }
+  }, [client, setStatus, syncState]);
+
+  return status;
+};
+
 const NodeStatus = () => {
-  const info = useRecoilValue(statusQuery);
+  const info = useRecoilValue(nodeInfoQuery);
+  const status = useNodeSyncStatus();
   return (
     <Space scale={4}>
-      <Text is="body">{statusInfo[info.status as NodeStatus]}</Text>
+      <Text is="body">{statusInfo[status as NodeStatus]}</Text>
+      <Text is="body">Version: {info.version}</Text>
     </Space>
   );
 };
@@ -126,9 +169,7 @@ const ConnectedFaucets = () => {
 const FaucetError = () => {
   return (
     <VStack>
-      <Text is="body">
-        Error connecting to the faucet make sure you are running a Myel client
-      </Text>
+      <Text is="body">Could not connect to Myel retrieval node</Text>
     </VStack>
   );
 };
@@ -136,17 +177,24 @@ const FaucetError = () => {
 const Wallet = () => {
   return (
     <Space scale={3}>
-      <ErrorBoundary fallback={<Title />}>
-        <Suspense fallback={null}>
+      <ErrorBoundary fallback={<PageTitle title="Welcome" secondary />}>
+        <Suspense
+          fallback={
+            <PageTitle title="TODO" subtitle="TODO" secondary loading />
+          }>
           <UserTitle />
         </Suspense>
       </ErrorBoundary>
-      <Suspense fallback={null}>
-        <NodeStatus />
-      </Suspense>
-      <Suspense fallback={null}>
-        <Balance />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <NodeStatus />
+        </Suspense>
+      </ErrorBoundary>
+      <ErrorBoundary>
+        <Suspense fallback={null}>
+          <Balance />
+        </Suspense>
+      </ErrorBoundary>
       <ErrorBoundary fallback={<FaucetError />}>
         <Suspense fallback={null}>
           <ConnectedFaucets />

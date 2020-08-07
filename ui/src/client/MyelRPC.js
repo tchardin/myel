@@ -1,5 +1,11 @@
 // MyelRPC selects the relevant provider based on the method called
 
+const overrides = {
+  SyncIncomingBlocks: {
+    subscription: true,
+  },
+};
+
 class MyelRPC {
   constructor(config) {
     const {myel, lotusFullNode, lotusStorageMiner} = config;
@@ -32,7 +38,7 @@ class MyelRPC {
             // FIXME: throw?
             console.warn(`Unknown method ${method}`);
           }
-          const schemaMethod = schema.methods[method];
+          const schemaMethod = overrides[method] || schema.methods[method];
           if (schemaMethod.subscription) {
             return this.callSchemaMethodSub.bind(
               this,
