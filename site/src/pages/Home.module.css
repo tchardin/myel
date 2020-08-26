@@ -1,0 +1,25 @@
+.main {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  padding: 40px;
+}
+
+.title {
+  font-size: 8em;
+  font-weight: 700;
+  color: #000;
+  mix-blend-mode: screen;
+  background: #fff;
+}
+
+.subtitle {
+  font-size: 2em;
+  color: #000;
+  opacity: 0.8;
+}
