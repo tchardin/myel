@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import styles from "./Home.module.css";
+import { ReactComponent as Blob } from "../effects/Blob.svg";
 
 const EmailInput = React.lazy(() => import("../components/EmailInput"));
 const NNCancas = React.lazy(() => import("../effects/NNCanvas"));
@@ -28,6 +29,9 @@ const Hero = () => {
           </a>
         </nav>
       </footer>
+      <div className={styles.blobContainer}>
+        <Blob width="100%" />
+      </div>
     </>
   );
 };
