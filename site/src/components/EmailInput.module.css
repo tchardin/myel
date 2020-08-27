@@ -58,3 +58,9 @@
     width: auto;
   }
 }
+
+.success {
+  font-weight: 500;
+  font-size: 1.5em;
+  grid-column: m / m 4;
+}
