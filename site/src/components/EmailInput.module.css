@@ -1,0 +1,60 @@
+.form {
+  grid-column: m / m 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.input {
+  width: 100%;
+  border-radius: 16px;
+  padding: 16px;
+  border-width: 1;
+  border-color: transparent;
+  box-shadow: inset 1px 1px 2px rgba(136, 165, 191, 0.38), inset -1px -1px 2px #FFFFFF;
+  margin-bottom: 2em;
+  transition: all 200ms cubic-bezier(0.02, 0.01, 0.47, 1);
+}
+
+.input:focus {
+  box-shadow: inset 2px 2px 5px rgba(136, 165, 191, 0.38), inset -3px -3px 7px #FFFFFF;
+}
+
+.inputError {
+  box-shadow: inset 2px 2px 5px rgba(136, 165, 191, 0.38), inset -3px -3px 7px #FFFFFF,  1px 1px 6px rgba(249, 90, 84, 0.4), -1px -1px 6px rgba(249, 90, 84, 0.4);
+}
+
+.button {
+  box-shadow: 2px 2px 10px rgba(136, 165, 191, 0.48), -2px -2px 10px #FFFFFF;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  padding-left: 32px;
+  padding-right: 32px;
+  border-radius: 16px;
+  font-weight: 700;
+  background-color: #fff;
+  border-width: 0px;
+  transition: all 200ms cubic-bezier(0.02, 0.01, 0.47, 1);
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.button:hover {
+  box-shadow: 4px 2px 16px rgba(136, 165, 191, 0.48), -4px -2px 16px #FFFFFF;
+}
+
+.button:active {
+  box-shadow: inset 3px 3px 7px rgba(136, 165, 191, 0.48), inset -3px -3px 7px #FFFFFF;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@media (min-width: 45em) {
+  .button {
+    width: auto;
+  }
+}

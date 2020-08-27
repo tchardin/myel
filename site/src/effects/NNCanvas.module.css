@@ -1,0 +1,13 @@
+.canvas {
+  pointer-events: none;
+  position: absolute;
+  height: 77px;
+  width: 100%;
+  grid-column: m / m 4;
+}
+
+@media (min-width: 45em) {
+  .canvas {
+    height: 150px;
+  }
+}
