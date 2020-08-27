@@ -96,6 +96,10 @@ html {
   text-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
+* {
+  outline: none;
+}
+
 /* These styles make the body full-height */
 html,
 body {
@@ -106,6 +110,7 @@ body {
 #root {
   display: flex;
   height: 100%;
+  flex-direction: column;
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");

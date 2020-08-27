@@ -1,10 +1,14 @@
+.grid {
+  display: grid;
+  grid-template-columns: [max] 1fr [l] 1fr [m] repeat(3, [m] 28vw) [m] 1fr [l] 1fr [max];
+}
+
 .main {
+  composes: grid;
   height: 100%;
   width: 100%;
   background: #fff;
-  display: grid;
   padding-top: max(8em, 20vmin);
-  grid-template-columns: [max] 1fr [l] 1fr [m] repeat(3, [m] 28vw) [m] 1fr [l] 1fr [max];
 }
 
 .title {
@@ -21,8 +25,13 @@
   opacity: 0.8;
 }
 
+.footer {
+  composes: grid;
+  padding: 2em 0;
+}
+
 @media (min-width: 45em) {
-  .main {
+  .grid {
     grid-template-columns: [max] 1fr [l] minmax(11ch, 0.7fr) [m] repeat(3, [m] 21.66ch) [m] minmax(11ch, 0.7fr) [l] 1fr [max];
   }
   .title {
@@ -38,4 +47,19 @@
   position: relative;
 }
 
+.footerNav {
+  grid-column: m / m 4;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
 
+.link {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.link:hover {
+  color: rgba(0, 0, 0, 0.8);
+}
