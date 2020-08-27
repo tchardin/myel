@@ -93,17 +93,19 @@ html {
   font-size: 16px;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
-  height: 100vh;
-  min-width: 300px;
-  overflow-x: hidden;
   text-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
 }
 
-.nn-canvas {
-  pointer-events: none;
-  position: absolute;
-  height: 151px;
-  width: 300px;
+/* These styles make the body full-height */
+html,
+body {
+  height: 100%;
+}
+
+/* These styles make the root element full-height */
+#root {
+  display: flex;
+  height: 100%;
 }
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap");

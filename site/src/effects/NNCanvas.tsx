@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useEffect, useRef } from "react";
 import { CPPN } from "./cppn";
+import styles from "./NNCanvas.module.css";
 
 const DEFAULT_Z_SCALE = 1;
 const NUM_NEURONS = 30;
@@ -26,6 +27,6 @@ const NNCanvas = () => {
       cppn.current = c;
     }
   }, []);
-  return <canvas ref={canvas} className="nn-canvas" />;
+  return <canvas ref={canvas} className={styles.canvas} />;
 };
 export default NNCanvas;
