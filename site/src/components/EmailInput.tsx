@@ -93,7 +93,7 @@ const EmailInput = () => {
           Github
         </a>
         . We won't share your data with anyone else. Your email hash is: <br />{" "}
-        {cid}.
+        <code>{cid}</code>.
       </p>
     </div>
   ) : (
