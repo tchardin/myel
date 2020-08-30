@@ -9,7 +9,8 @@
   width: 100%;
   border-radius: 16px;
   padding: 16px;
-  border-width: 1;
+  border-width: 1px;
+  background-color: #ECF0F3;
   border-color: transparent;
   box-shadow: inset 1px 1px 2px rgba(136, 165, 191, 0.38), inset -1px -1px 2px #FFFFFF;
   margin-bottom: 2em;
@@ -25,14 +26,14 @@
 }
 
 .button {
-  box-shadow: 2px 2px 10px rgba(136, 165, 191, 0.48), -2px -2px 10px #FFFFFF;
+  box-shadow: 2px 2px 10px rgba(136, 165, 191, 0.48), -4px -4px 10px #FFFFFF;
   padding-top: 16px;
   padding-bottom: 16px;
   padding-left: 32px;
   padding-right: 32px;
   border-radius: 16px;
   font-weight: 700;
-  background-color: #fff;
+  background-color: #ECF0F3;
   border-width: 0px;
   transition: all 200ms cubic-bezier(0.02, 0.01, 0.47, 1);
   cursor: pointer;

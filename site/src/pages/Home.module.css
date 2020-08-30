@@ -5,7 +5,6 @@
 
 .main {
   composes: grid;
-  height: 100%;
   width: 100%;
   background: #fff;
   padding-top: max(8em, 20vmin);
@@ -25,9 +24,42 @@
   opacity: 0.8;
 }
 
+.inlineLink {
+  color: #406098;
+  font-weight: 500;
+}
+
+.section {
+  display: grid;
+  padding: 32px 0 32px;
+}
+
+.info {
+  font-weight: 400;
+  padding-bottom: 32px;
+}
+
+.formSection {
+  composes: grid;
+  padding: 72px 0 72px;
+  background-color: #ECF0F3;
+}
+
 .footer {
   composes: grid;
   padding: 2em 0;
+  background-color: #ECF0F3;
+}
+
+.imgFigure {
+  grid-column: m / m 4;
+    padding: 72px 0 72px;
+}
+
+.dashboardImg {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 50px 100px -20px rgba(50,50,93,.25), 0 30px 60px -30px rgba(0,0,0,.3);
 }
 
 @media (min-width: 45em) {
@@ -39,6 +71,12 @@
   }
   .subtitle {
     font-size: 2em;
+  }
+  .section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .imgFigure {
+    padding: 116px 0 128px;
   }
 }
 
