@@ -1,4 +1,5 @@
 .form {
+  position: relative;
   grid-column: m / m 4;
   display: flex;
   flex-direction: column;
@@ -60,8 +61,46 @@
   }
 }
 
+.successContainer {
+  grid-column: m / m 4;
+  display: flex;
+  flex-direction: column;
+}
+
 .success {
   font-weight: 500;
   font-size: 1.5em;
-  grid-column: m / m 4;
+  margin-bottom: 1em;
+}
+
+.subSuccess {
+  font-weight: 400;
+  font-size: 1em;
+  opacity: 0.4;
+}
+
+.inlineLink {
+  color: #406098;
+  font-weight: 500;
+}
+
+.activityIndicator {
+  position: absolute;
+  top: 14.5px;
+  right: 16px;
+  animation-timing-function: linear;
+  animation-name: spin;
+  animation-iteration-count: infinite;
+  animation-duration: 0.75s;
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
