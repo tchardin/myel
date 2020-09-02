@@ -52,11 +52,12 @@
 }
 
 .imgFigure {
-  grid-column: m / m 4;
+    grid-column: m / m 4;
     padding: 72px 0 72px;
 }
 
 .dashboardImg {
+  overflow: hidden;
   width: 100%;
   border-radius: 16px;
   box-shadow: 0 50px 100px -20px rgba(50,50,93,.25), 0 30px 60px -30px rgba(0,0,0,.3);

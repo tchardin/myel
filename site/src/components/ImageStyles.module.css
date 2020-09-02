@@ -1,0 +1,38 @@
+.container {
+  height: 0;
+  position: relative;
+}
+
+.high {
+  padding-bottom: 70%;
+}
+
+.long {
+  padding-bottom: 44%;
+}
+
+.img {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  left: 0;
+  top: 0;
+}
+
+.placeholder {
+  composes: img;
+  filter: blur(5px);
+}
+
+.final {
+  composes: img;
+  opacity: 0;
+  background-color: rgba(255, 255, 255, 0);
+  transition: opacity 400ms ease;
+}
+
+.show {
+  opacity: 1;
+}
+
+

@@ -4,6 +4,9 @@ import Dashboard from "../assets/LatestDashboard.png";
 import Dashboard2 from "../assets/LatestDashboard@2x.png";
 import Dashboard3 from "../assets/LatestDashboard@3x.png";
 import Illustration from "../assets/Illustration-03.png";
+import IllustrationLowRes from "../assets/Illustration-03LowRes.png";
+import DashboardLowRes from "../assets/LatestDashboardLowRes.png";
+import ProgressiveImage from "../components/ProgressiveImage";
 
 const EmailInput = React.lazy(() => import("../components/EmailInput"));
 const NNCancas = React.lazy(() => import("../effects/NNCanvas"));
@@ -35,21 +38,23 @@ const Hero = () => {
               as simple as installing any desktop app.
             </p>
             <figure className={styles.sideImage}>
-              <img
+              <ProgressiveImage
+                ratio="long"
                 src={Illustration}
+                plh={IllustrationLowRes}
                 alt="Individual with a personal computer"
-                className={styles.illustration}
               />
             </figure>
           </section>
         </div>
         <figure className={styles.imgFigure}>
-          <img
-            src={Dashboard}
-            srcSet={`${Dashboard} 1x, ${Dashboard2} 2x, ${Dashboard3} 3x, ${Dashboard}`}
-            alt="Dashboard preview"
-            className={styles.dashboardImg}
-          />
+          <div className={styles.dashboardImg}>
+            <ProgressiveImage
+              srcSet={`${Dashboard} 1x, ${Dashboard2} 2x, ${Dashboard3} 3x, ${Dashboard}`}
+              alt="Dashboard preview"
+              plh={DashboardLowRes}
+            />
+          </div>
         </figure>
       </main>
       <div className={styles.formSection}>
