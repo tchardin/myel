@@ -1,0 +1,23 @@
+[
+    {
+        "id": 3259,
+        "filAmount": "0.123",
+        "dolAmount": "1.029",
+        "type": "Retrieval",
+        "date": "10 Sep 2020, 9:26 AM"
+    },
+    {
+        "id": 7399,
+        "filAmount": "120",
+        "dolAmount": "936",
+        "type": "Withdrawal",
+        "date": "27 Jul 2020, 3:23 PM"
+    },
+    {
+        "id": 3003,
+        "filAmount": "0.012",
+        "dolAmount": "0.09",
+        "type": "Retrieval",
+        "date": "14 Jul 2020, 12:55 PM"
+    }
+]
