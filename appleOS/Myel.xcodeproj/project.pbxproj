@@ -10,7 +10,6 @@
 		3230FBB425025F4C0088A421 /* StyleGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBB325025F4C0088A421 /* StyleGuide.swift */; };
 		3230FBB625026A150088A421 /* WalletIntroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBB525026A150088A421 /* WalletIntroView.swift */; };
 		3230FBC82503C7270088A421 /* Secp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBC72503C7270088A421 /* Secp.swift */; };
-		3230FBCB2503D7430088A421 /* secp256k1 in Frameworks */ = {isa = PBXBuildFile; productRef = 3230FBCA2503D7430088A421 /* secp256k1 */; };
 		3230FBCE2504084A0088A421 /* Mnemonic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBCD2504084A0088A421 /* Mnemonic.swift */; };
 		3230FBD0250408790088A421 /* Chinese.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBCF250408790088A421 /* Chinese.swift */; };
 		3230FBD2250408800088A421 /* Data+BitArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FBD1250408800088A421 /* Data+BitArray.swift */; };
@@ -26,6 +25,7 @@
 		3230FC3D250677A40088A421 /* Wallet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FC3C250677A40088A421 /* Wallet.swift */; };
 		3230FC3F2507B4550088A421 /* AddressTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3230FC3E2507B4550088A421 /* AddressTests.swift */; };
 		3230FC4A2508B93E0088A421 /* blake2b.c in Sources */ = {isa = PBXBuildFile; fileRef = 3230FC492508B93E0088A421 /* blake2b.c */; };
+		328B6ECE250CCF3E006EAA26 /* secp256k1.c in Sources */ = {isa = PBXBuildFile; fileRef = 328B6ECD250CCF3E006EAA26 /* secp256k1.c */; };
 		32AE705E24FF8FD400C31981 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32AE705D24FF8FD400C31981 /* AppDelegate.swift */; };
 		32AE706024FF8FD400C31981 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32AE705F24FF8FD400C31981 /* ContentView.swift */; };
 		32AE706224FF8FD600C31981 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 32AE706124FF8FD600C31981 /* Assets.xcassets */; };
@@ -92,6 +92,38 @@
 		3230FC472508B3B60088A421 /* blake2b.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = blake2b.h; sourceTree = "<group>"; };
 		3230FC492508B93E0088A421 /* blake2b.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = blake2b.c; sourceTree = "<group>"; };
 		3230FC4B2508B97A0088A421 /* blake2-impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "blake2-impl.h"; sourceTree = "<group>"; };
+		328B6ECC250CCF3E006EAA26 /* secp256k1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = secp256k1.h; sourceTree = "<group>"; };
+		328B6ECD250CCF3E006EAA26 /* secp256k1.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = secp256k1.c; sourceTree = "<group>"; };
+		328B6ECF250CCFBF006EAA26 /* util.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		328B6ED0250CD019006EAA26 /* num_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = num_impl.h; sourceTree = "<group>"; };
+		328B6ED1250CD103006EAA26 /* field.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = field.h; sourceTree = "<group>"; };
+		328B6ED2250CD133006EAA26 /* field_10x26.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = field_10x26.h; sourceTree = "<group>"; };
+		328B6ED3250CD17B006EAA26 /* field_10x26_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = field_10x26_impl.h; sourceTree = "<group>"; };
+		328B6ED4250CD1C6006EAA26 /* num.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = num.h; sourceTree = "<group>"; };
+		328B6ED5250CD38C006EAA26 /* field_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = field_impl.h; sourceTree = "<group>"; };
+		328B6ED6250CD429006EAA26 /* scalar_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scalar_impl.h; sourceTree = "<group>"; };
+		328B6ED7250CD463006EAA26 /* group.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = group.h; sourceTree = "<group>"; };
+		328B6ED8250CD488006EAA26 /* scalar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scalar.h; sourceTree = "<group>"; };
+		328B6ED9250CD4EB006EAA26 /* scalar_8x32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scalar_8x32.h; sourceTree = "<group>"; };
+		328B6EDA250CD553006EAA26 /* scalar_8x32_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = scalar_8x32_impl.h; sourceTree = "<group>"; };
+		328B6EDB250CD5A7006EAA26 /* group_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = group_impl.h; sourceTree = "<group>"; };
+		328B6EDC250CD5E3006EAA26 /* ecmult_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult_impl.h; sourceTree = "<group>"; };
+		328B6EDD250CD5FF006EAA26 /* ecmult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult.h; sourceTree = "<group>"; };
+		328B6EDE250CD643006EAA26 /* ecmult_const_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult_const_impl.h; sourceTree = "<group>"; };
+		328B6EDF250CD66C006EAA26 /* ecmult_const.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult_const.h; sourceTree = "<group>"; };
+		328B6EE0250CD6AC006EAA26 /* ecmult_gen_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult_gen_impl.h; sourceTree = "<group>"; };
+		328B6EE1250CD6D7006EAA26 /* ecmult_gen.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecmult_gen.h; sourceTree = "<group>"; };
+		328B6EE2250CD704006EAA26 /* hash_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hash_impl.h; sourceTree = "<group>"; };
+		328B6EE3250CD729006EAA26 /* hash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hash.h; sourceTree = "<group>"; };
+		328B6EE4250CD7AB006EAA26 /* ecdsa_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecdsa_impl.h; sourceTree = "<group>"; };
+		328B6EE5250CD7CB006EAA26 /* ecdsa.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ecdsa.h; sourceTree = "<group>"; };
+		328B6EE6250CD7F9006EAA26 /* eckey_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = eckey_impl.h; sourceTree = "<group>"; };
+		328B6EE7250CD814006EAA26 /* eckey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = eckey.h; sourceTree = "<group>"; };
+		328B6EEA250CD8A9006EAA26 /* basic-config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "basic-config.h"; sourceTree = "<group>"; };
+		328B6EEB250CF339006EAA26 /* secp256k1_recovery_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = secp256k1_recovery_impl.h; sourceTree = "<group>"; };
+		328B6EEC250CF3A4006EAA26 /* secp256k1_recovery.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = secp256k1_recovery.h; sourceTree = "<group>"; };
+		328B6EEF250D08D1006EAA26 /* secp256k1_ext_impl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = secp256k1_ext_impl.h; sourceTree = "<group>"; };
+		328B6EF0250D0A74006EAA26 /* secp256k1_ext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = secp256k1_ext.h; sourceTree = "<group>"; };
 		32AE705A24FF8FD400C31981 /* Myel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Myel.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		32AE705D24FF8FD400C31981 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		32AE705F24FF8FD400C31981 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -131,7 +163,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3230FC23250512A80088A421 /* libblst.a in Frameworks */,
-				3230FBCB2503D7430088A421 /* secp256k1 in Frameworks */,
 				3230FC39250618BD0088A421 /* VarInt in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -184,6 +215,45 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		328B6ECB250CCEFD006EAA26 /* libsecp256k1 */ = {
+			isa = PBXGroup;
+			children = (
+				328B6ECC250CCF3E006EAA26 /* secp256k1.h */,
+				328B6ECD250CCF3E006EAA26 /* secp256k1.c */,
+				328B6EEF250D08D1006EAA26 /* secp256k1_ext_impl.h */,
+				328B6EF0250D0A74006EAA26 /* secp256k1_ext.h */,
+				328B6EEA250CD8A9006EAA26 /* basic-config.h */,
+				328B6EE6250CD7F9006EAA26 /* eckey_impl.h */,
+				328B6EE7250CD814006EAA26 /* eckey.h */,
+				328B6EE0250CD6AC006EAA26 /* ecmult_gen_impl.h */,
+				328B6EE2250CD704006EAA26 /* hash_impl.h */,
+				328B6EE3250CD729006EAA26 /* hash.h */,
+				328B6EE1250CD6D7006EAA26 /* ecmult_gen.h */,
+				328B6EDE250CD643006EAA26 /* ecmult_const_impl.h */,
+				328B6EDF250CD66C006EAA26 /* ecmult_const.h */,
+				328B6EDC250CD5E3006EAA26 /* ecmult_impl.h */,
+				328B6EDD250CD5FF006EAA26 /* ecmult.h */,
+				328B6EE4250CD7AB006EAA26 /* ecdsa_impl.h */,
+				328B6EE5250CD7CB006EAA26 /* ecdsa.h */,
+				328B6ED6250CD429006EAA26 /* scalar_impl.h */,
+				328B6EDA250CD553006EAA26 /* scalar_8x32_impl.h */,
+				328B6ED7250CD463006EAA26 /* group.h */,
+				328B6EDB250CD5A7006EAA26 /* group_impl.h */,
+				328B6ED8250CD488006EAA26 /* scalar.h */,
+				328B6ED9250CD4EB006EAA26 /* scalar_8x32.h */,
+				328B6ED1250CD103006EAA26 /* field.h */,
+				328B6ED5250CD38C006EAA26 /* field_impl.h */,
+				328B6ED2250CD133006EAA26 /* field_10x26.h */,
+				328B6ED3250CD17B006EAA26 /* field_10x26_impl.h */,
+				328B6EEC250CF3A4006EAA26 /* secp256k1_recovery.h */,
+				328B6ED4250CD1C6006EAA26 /* num.h */,
+				328B6ECF250CCFBF006EAA26 /* util.h */,
+				328B6ED0250CD019006EAA26 /* num_impl.h */,
+				328B6EEB250CF339006EAA26 /* secp256k1_recovery_impl.h */,
+			);
+			path = libsecp256k1;
+			sourceTree = "<group>";
+		};
 		32AE705124FF8FD400C31981 = {
 			isa = PBXGroup;
 			children = (
@@ -208,6 +278,7 @@
 		32AE705C24FF8FD400C31981 /* Myel */ = {
 			isa = PBXGroup;
 			children = (
+				328B6ECB250CCEFD006EAA26 /* libsecp256k1 */,
 				32AE70AE25012F3300C31981 /* Charts */,
 				32AE70AC2501228D00C31981 /* Help */,
 				32AE70A32500D5E800C31981 /* Resources */,
@@ -341,7 +412,6 @@
 			);
 			name = Myel;
 			packageProductDependencies = (
-				3230FBCA2503D7430088A421 /* secp256k1 */,
 				3230FC38250618BD0088A421 /* VarInt */,
 			);
 			productName = Myel;
@@ -418,7 +488,6 @@
 			);
 			mainGroup = 32AE705124FF8FD400C31981;
 			packageReferences = (
-				3230FBC92503D7430088A421 /* XCRemoteSwiftPackageReference "secp256k1.swift" */,
 				3230FC37250618BD0088A421 /* XCRemoteSwiftPackageReference "VarInt" */,
 			);
 			productRefGroup = 32AE705B24FF8FD400C31981 /* Products */;
@@ -465,6 +534,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				328B6ECE250CCF3E006EAA26 /* secp256k1.c in Sources */,
 				3230FC3D250677A40088A421 /* Wallet.swift in Sources */,
 				3230FBB425025F4C0088A421 /* StyleGuide.swift in Sources */,
 				32AE709824FFA7AB00C31981 /* SearchBar.swift in Sources */,
@@ -671,6 +741,7 @@
 				DEVELOPMENT_TEAM = 5SQ5N74WT5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = Myel/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -681,6 +752,7 @@
 					"$(PROJECT_DIR)/Myel",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = network.myel.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Myel/Myel-Bridging-Header.h";
@@ -702,6 +774,7 @@
 				DEVELOPMENT_TEAM = 5SQ5N74WT5;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				INFOPLIST_FILE = Myel/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -712,6 +785,7 @@
 					"$(PROJECT_DIR)/Myel",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = network.myel.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Myel/Myel-Bridging-Header.h";
@@ -845,14 +919,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		3230FBC92503D7430088A421 /* XCRemoteSwiftPackageReference "secp256k1.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/keefertaylor/secp256k1.swift.git";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
 		3230FC37250618BD0088A421 /* XCRemoteSwiftPackageReference "VarInt" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/NeoTeo/VarInt.git";
@@ -864,11 +930,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3230FBCA2503D7430088A421 /* secp256k1 */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3230FBC92503D7430088A421 /* XCRemoteSwiftPackageReference "secp256k1.swift" */;
-			productName = secp256k1;
-		};
 		3230FC38250618BD0088A421 /* VarInt */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 3230FC37250618BD0088A421 /* XCRemoteSwiftPackageReference "VarInt" */;

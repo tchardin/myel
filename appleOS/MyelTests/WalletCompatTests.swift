@@ -24,14 +24,21 @@ class WalletCompatTests: XCTestCase {
         // Result address should match our lotus address
         XCTAssertEqual(expectedAddr, finalAddr)
         
-//        var msg = [UInt8](repeating: 0, count: 32)
-//        for (i, _) in msg.enumerated() {
-//            msg[i] = UInt8(i)
-//        }
-//        let msgHex = Data(msg).toHex()
-//
-//        print(msgHex)
-//
-//        XCTAssertEqual(msgHex, "wrongValue")
+        var msg = [UInt8](repeating: 0, count: 32)
+        for (i, _) in msg.enumerated() {
+            msg[i] = UInt8(i)
+        }
+        // let msgHex = Data(msg).toHex()
+        
+        let skey = Secp256k1.PrivateKey(skeyRaw)
+        
+        let sig = try! skey.signature(for: msg)
+        // Add secp sig type as first byte
+        let sigBytes: [UInt8] = [1] + sig
+        let sigStr = Data(sigBytes).toHex()
+        
+        let expectedSignature = "01268070ca74e1c6da467845800b0b2c32cfd6cef0848bbd65167ae6bdca6e40a45f80897ab81af45d8d0d92f203524a91ef408eb8d2074ea21105fbfba05c1db501"
+
+        XCTAssertEqual(expectedSignature, sigStr)
     }
 }
