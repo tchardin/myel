@@ -7,7 +7,7 @@ const credentials = {
   apiKey: process.env.REACT_APP_FLEEK_KEY!,
   apiSecret: process.env.REACT_APP_FLEEK_SECRET!,
 };
-const FILE_KEY = "myel-email-list.json";
+const FILE_KEY = "email.json";
 
 const ActivityIndicator = () => {
   return (
@@ -57,7 +57,7 @@ const EmailInput = () => {
     try {
       const { hash } = await fleekStorage.upload({
         ...credentials,
-        key: FILE_KEY,
+        key: `${email?.split("@")[0]}-${FILE_KEY}`,
         data: email,
       });
       setCid(hash);
