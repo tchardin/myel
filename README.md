@@ -1,3 +1,5 @@
+_**Note**: Myel retrieval network is now in development [here](https://github.com/myelnet/go-myel-network)_
+
 # Myel
 
 Easy Filecoin retrieval mining
